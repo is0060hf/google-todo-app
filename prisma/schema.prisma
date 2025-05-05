@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  googleId        String    @unique
+  email           String    @unique
+  name            String?
+  avatarUrl       String?
+  subscriptionPlan String    @default("FREE") // "FREE" or "PREMIUM"
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  customTasks     TaskCustomData[]
+  tags            Tag[]
+  dailyStats      DailyStats[]
+  weeklyStats     WeeklyStats[]
+  monthlyStats    MonthlyStats[]
+  yearlyStats     YearlyStats[]
+}
+
+model TaskCustomData {
+  id            String    @id @default(cuid())
+  googleTaskId  String    @unique // Google Task ID
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade) // ユーザー削除時にカスタムデータも削除
+  priorityId    Int?
+  priority      Priority? @relation(fields: [priorityId], references: [id])
+  tags          Tag[]     
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Tag {
+  id            String    @id @default(cuid())
+  name          String
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade) // ユーザー削除時にタグも削除
+  customTasks   TaskCustomData[] 
+
+  @@unique([name, userId])
+  @@index([userId])
+}
+
+model Priority {
+  id            Int       @id @default(autoincrement())
+  name          String    @unique // "High", "Medium", "Low"
+  level         Int       @unique // 3, 2, 1
+  customTasks   TaskCustomData[]
+}
+
+// 統計モデル
+model DailyStats {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime  @db.Date // YYYY-MM-DD
+  completedCount Int       @default(0) // その日に完了したタスク数
+  createdCount   Int       @default(0)  // その日に作成されたタスク数
+  completionRate Float?    // 完了率 (0.0-1.0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model WeeklyStats {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year           Int       // 年 (例: 2023)
+  weekOfYear     Int       // 年の中の週番号 (1-53)
+  completedCount Int       @default(0)
+  createdCount   Int       @default(0)
+  completionRate Float?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId, year, weekOfYear])
+  @@index([userId])
+  @@index([year, weekOfYear])
+}
+
+model MonthlyStats {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year           Int       // 年 (例: 2023)
+  month          Int       // 月 (1-12)
+  completedCount Int       @default(0)
+  createdCount   Int       @default(0)
+  completionRate Float?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId, year, month])
+  @@index([userId])
+  @@index([year, month])
+}
+
+model YearlyStats {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year           Int       // 年 (例: 2023)
+  completedCount Int       @default(0)
+  createdCount   Int       @default(0)
+  completionRate Float?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId, year])
+  @@index([userId])
+  @@index([year])
+}
