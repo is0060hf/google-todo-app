@@ -51,6 +51,67 @@ export async function getTaskLists(accessToken: string): Promise<GoogleTaskList[
 }
 
 /**
+ * 新しいタスクリストを作成
+ * @param taskList タスクリストデータ
+ * @param accessToken アクセストークン
+ * @returns 作成されたタスクリスト
+ */
+export async function createTaskList(
+  taskList: { title: string },
+  accessToken: string
+): Promise<GoogleTaskList> {
+  return fetchTasksApi('/users/@me/lists', accessToken, {
+    method: 'POST',
+    body: JSON.stringify(taskList),
+  });
+}
+
+/**
+ * 特定のタスクリストを取得
+ * @param taskListId タスクリストID
+ * @param accessToken アクセストークン
+ * @returns タスクリスト情報
+ */
+export async function getTaskList(
+  taskListId: string,
+  accessToken: string
+): Promise<GoogleTaskList> {
+  return fetchTasksApi(`/users/@me/lists/${taskListId}`, accessToken);
+}
+
+/**
+ * タスクリストを更新
+ * @param taskListId タスクリストID
+ * @param taskList 更新データ
+ * @param accessToken アクセストークン
+ * @returns 更新されたタスクリスト
+ */
+export async function updateTaskList(
+  taskListId: string,
+  taskList: { title: string },
+  accessToken: string
+): Promise<GoogleTaskList> {
+  return fetchTasksApi(`/users/@me/lists/${taskListId}`, accessToken, {
+    method: 'PATCH',
+    body: JSON.stringify(taskList),
+  });
+}
+
+/**
+ * タスクリストを削除
+ * @param taskListId タスクリストID
+ * @param accessToken アクセストークン
+ */
+export async function deleteTaskList(
+  taskListId: string,
+  accessToken: string
+): Promise<void> {
+  await fetchTasksApi(`/users/@me/lists/${taskListId}`, accessToken, {
+    method: 'DELETE',
+  });
+}
+
+/**
  * 特定のタスクリストのタスク一覧を取得
  * @param taskListId タスクリストID
  * @param accessToken アクセストークン
@@ -163,4 +224,42 @@ export async function uncompleteTask(
     },
     accessToken
   );
+}
+
+/**
+ * タスクの順序を変更
+ * @param taskListId タスクリストID
+ * @param taskId タスクID
+ * @param params 移動パラメータ
+ * @param accessToken アクセストークン
+ * @returns 更新されたタスク
+ */
+export async function moveTask(
+  taskListId: string,
+  taskId: string,
+  params: {
+    parent?: string;
+    previous?: string;
+  },
+  accessToken: string
+): Promise<GoogleTask> {
+  let endpoint = `/lists/${taskListId}/tasks/${taskId}/move`;
+  
+  // クエリパラメータを追加
+  const queryParams = new URLSearchParams();
+  if (params.parent) {
+    queryParams.append('parent', params.parent);
+  }
+  if (params.previous) {
+    queryParams.append('previous', params.previous);
+  }
+  
+  const queryString = queryParams.toString();
+  if (queryString) {
+    endpoint += `?${queryString}`;
+  }
+  
+  return fetchTasksApi(endpoint, accessToken, {
+    method: 'POST',
+  });
 } 
