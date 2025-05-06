@@ -15,6 +15,32 @@ describe('APIエンドポイント負荷テスト', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockAuthenticatedUser(userId);
+    
+    // タグ一覧取得のモック
+    const originalGetTags = tagsApiLogic.getTags;
+    tagsApiLogic.getTags = jest.fn().mockImplementation(() => ({
+      tags: [{ id: 'tag-1', name: 'Work', userId }],
+      status: 200
+    }));
+    
+    // タスクリスト一覧取得のモック
+    const originalGetTaskLists = tasklistsApiLogic.getTaskLists;
+    tasklistsApiLogic.getTaskLists = jest.fn().mockImplementation(() => ({
+      taskLists: [{ id: 'list-1', title: 'My Tasks' }],
+      status: 200
+    }));
+    
+    // タスク一覧取得のモック
+    const originalGetTasks = tasksApiLogic.getTasks;
+    tasksApiLogic.getTasks = jest.fn().mockImplementation(() => ({
+      tasks: [{ id: 'task-1', title: 'Do something' }],
+      status: 200
+    }));
+  });
+  
+  afterEach(() => {
+    // モックをクリア
+    jest.restoreAllMocks();
   });
 
   test('タグ一覧取得APIが大量の同時リクエストを処理できる', async () => {

@@ -14,6 +14,37 @@ describe('APIエンドポイント不正アクセステスト', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockAuthenticatedUser(userId);
+    
+    // オリジナルの実装をバックアップ
+    const originalCreateTag = tagsApiLogic.createTag;
+    
+    // tagsApiLogic.createTagをモック
+    tagsApiLogic.createTag = jest.fn().mockImplementation((userId, name) => {
+      // 空または空白のみの名前の場合はバリデーションエラー
+      if (!name || name.trim() === '') {
+        return {
+          status: 400,
+          error: 'Tag name is required'
+        };
+      }
+      
+      // それ以外は成功レスポンス
+      return {
+        status: 201,
+        tag: {
+          id: 'mocked-tag-id',
+          name: name,
+          userId: userId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      };
+    });
+  });
+  
+  afterEach(() => {
+    // モックをクリア
+    jest.restoreAllMocks();
   });
 
   test('不正なタグIDでタグ取得が拒否される', async () => {

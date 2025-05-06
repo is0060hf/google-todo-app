@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { NextAuthProvider } from './providers';
+import { Providers } from './providers';
 import Header from './components/layout/Header';
 import './globals.css';
 
@@ -36,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={inter.className}>
-        <NextAuthProvider>
+        <Providers>
           <ThemeProvider theme={theme}>
             <CssBaseline />
             <Header />
@@ -44,7 +44,7 @@ export default function RootLayout({
               {children}
             </main>
           </ThemeProvider>
-        </NextAuthProvider>
+        </Providers>
       </body>
     </html>
   );
