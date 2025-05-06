@@ -1,28 +1,28 @@
 # Google TODO連携アプリケーション 開発タスク一覧
 
 ## 1. プロジェクト初期設定
-- [ ] Next.jsプロジェクトの作成（v14以上）
-- [ ] 必要なパッケージのインストール（Material UI、Prisma、next-auth、React Query、Zustand）
-- [ ] プロジェクト構成の整備
-- [ ] 環境変数の設定（.env.local）
-- [ ] Google Cloud Platform設定（OAuth同意画面、認証情報）
-- [ ] Google Tasks APIの有効化と権限設定
+- [x] Next.jsプロジェクトの作成（v14以上）
+- [x] 必要なパッケージのインストール（Material UI、Prisma、next-auth、React Query、Zustand）
+- [x] プロジェクト構成の整備
+- [x] 環境変数の設定（.env.local）
+- [x] Google Cloud Platform設定（OAuth同意画面、認証情報）
+- [x] Google Tasks APIの有効化と権限設定
 
 ## 2. データベース設計・実装
-- [ ] Neonアカウント作成とデータベース設定
-- [ ] Prismaスキーマの定義（User、TaskCustomData、Tag、Priority、統計モデル）
-- [ ] マイグレーション実行と初期データ投入
-- [ ] Prismaクライアント設定
+- [x] Neonアカウント作成とデータベース設定
+- [x] Prismaスキーマの定義（User、TaskCustomData、Tag、Priority、統計モデル）
+- [x] マイグレーション実行と初期データ投入
+- [x] Prismaクライアント設定
 
 ## 3. 認証機能実装
-- [ ] next-auth設定（Google Provider）
-- [ ] サーバーサイドセッション管理
-- [ ] ログイン/ログアウトフロー
-- [ ] 権限管理（API認証）
-- [ ] 利用規約・プライバシーポリシー同意画面
+- [x] next-auth設定（Google Provider）
+- [x] サーバーサイドセッション管理
+- [x] ログイン/ログアウトフロー
+- [x] 権限管理（API認証）
+- [x] 利用規約・プライバシーポリシー同意画面
 
 ## 4. バックエンドAPI実装
-- [ ] APIルート構造設計
+- [x] APIルート構造設計
 - [ ] Google Tasks API連携エンドポイント
   - [ ] タスクリスト管理（取得/作成/更新/削除）
   - [ ] タスク管理（取得/作成/更新/削除/移動/完了状態変更）
@@ -33,9 +33,9 @@
 - [ ] ユーザー管理エンドポイント
 
 ## 5. フロントエンド基盤実装
-- [ ] アプリケーションレイアウト設計
-- [ ] レスポンシブデザイン対応
-- [ ] 状態管理設定（Zustand）
+- [x] アプリケーションレイアウト設計
+- [x] レスポンシブデザイン対応
+- [x] 状態管理設定（Zustand）
 - [ ] APIキャッシュ設定（React Query）
 - [ ] 共通UIコンポーネント開発
 
@@ -67,9 +67,9 @@
 - [ ] 期間切替機能（日次/週次/月次/年次）
 
 ## 9. セキュリティ対策
-- [ ] CSP設定
-- [ ] CSRF対策
-- [ ] 認証トークン安全管理
+- [x] CSP設定
+- [x] CSRF対策
+- [x] 認証トークン安全管理
 - [ ] エラーハンドリング
 
 ## 10. パフォーマンス最適化
