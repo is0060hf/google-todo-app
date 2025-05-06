@@ -1,0 +1,90 @@
+{
+  "dashboard": {
+    "title": "ダッシュボード",
+    "loginRequired": "ダッシュボードを表示するにはログインが必要です。",
+    "completedTasks": "完了タスク数",
+    "completionRate": "タスク完了率",
+    "createdVsCompleted": "作成 vs 完了",
+    "distribution": "タスク分布",
+    "activity": "アクティビティ",
+    "period": {
+      "daily": "日次",
+      "weekly": "週次",
+      "monthly": "月次",
+      "yearly": "年次"
+    },
+    "noData": "データがありません"
+  },
+  "tasks": {
+    "title": "タスク管理",
+    "newTask": "タスクを追加",
+    "edit": "編集",
+    "delete": "削除",
+    "title_field": "タイトル",
+    "due": "期限",
+    "status": "状態",
+    "priority": "優先度",
+    "tags": "タグ",
+    "position": "順序",
+    "actions": "アクション",
+    "moveUp": "上へ移動",
+    "moveDown": "下へ移動",
+    "selectList": "タスクリストを選択してください",
+    "deleteConfirm": "このタスクを削除してもよろしいですか？この操作は元に戻せません。"
+  },
+  "filter": {
+    "title": "フィルター",
+    "reset": "リセット",
+    "open": "フィルターを開く",
+    "close": "フィルターを閉じる",
+    "prioritySelected": "優先度: {{count}}個選択",
+    "tagsSelected": "タグ: {{count}}個選択",
+    "status": {
+      "title": "状態",
+      "all": "すべて",
+      "active": "未完了",
+      "completed": "完了"
+    },
+    "dueDate": {
+      "title": "期限",
+      "all": "すべて",
+      "overdue": "期限切れ",
+      "today": "今日",
+      "tomorrow": "明日",
+      "thisWeek": "今週",
+      "nextWeek": "来週",
+      "future": "将来"
+    }
+  },
+  "sidebar": {
+    "title": "タスクリスト",
+    "toggle": {
+      "show": "リストを表示",
+      "hide": "リストを閉じる"
+    }
+  },
+  "priority": {
+    "high": "高",
+    "medium": "中",
+    "low": "低",
+    "unset": "未設定"
+  },
+  "tag": {
+    "unset": "未設定"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "retry": "再試行",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "confirm": "確認",
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "account": "アカウント設定",
+    "myAccount": "マイアカウント",
+    "user": "ユーザー",
+    "language": "言語"
+  }
+} 

@@ -23,6 +23,11 @@ interface StatsResponse {
   yearlyStats?: StatData[];
 }
 
+interface DistributionResponse {
+  priorityDistribution: TaskDistribution[];
+  tagDistribution: TaskDistribution[];
+}
+
 /**
  * 統計データを取得するカスタムフック
  */
@@ -102,22 +107,15 @@ export function useStatsData(period: PeriodType, currentDate: Date) {
             break;
         }
         
-        // 優先度とタグの分布データを取得（実務では別APIなど）
-        // モックデータを設定
-        setPriorityDistribution([
-          { name: '高', value: 5 },
-          { name: '中', value: 12 },
-          { name: '低', value: 8 },
-          { name: '未設定', value: 3 },
-        ]);
+        // 優先度とタグの分布データを取得
+        const distributionResponse = await fetch('/api/stats/distribution');
+        if (!distributionResponse.ok) {
+          throw new Error('分布データの取得に失敗しました');
+        }
         
-        setTagDistribution([
-          { name: '仕事', value: 10 },
-          { name: 'プライベート', value: 8 },
-          { name: '買い物', value: 5 },
-          { name: '重要', value: 7 },
-          { name: 'その他', value: 4 },
-        ]);
+        const distributionData: DistributionResponse = await distributionResponse.json();
+        setPriorityDistribution(distributionData.priorityDistribution || []);
+        setTagDistribution(distributionData.tagDistribution || []);
         
       } catch (err) {
         console.error('Error fetching stats data:', err);

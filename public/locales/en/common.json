@@ -1,0 +1,90 @@
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "loginRequired": "You need to be logged in to view the dashboard.",
+    "completedTasks": "Completed Tasks",
+    "completionRate": "Task Completion Rate",
+    "createdVsCompleted": "Created vs Completed",
+    "distribution": "Task Distribution",
+    "activity": "Activity",
+    "period": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    },
+    "noData": "No data available"
+  },
+  "tasks": {
+    "title": "Task Management",
+    "newTask": "Add Task",
+    "edit": "Edit",
+    "delete": "Delete",
+    "title_field": "Title",
+    "due": "Due Date",
+    "status": "Status",
+    "priority": "Priority",
+    "tags": "Tags",
+    "position": "Position",
+    "actions": "Actions",
+    "moveUp": "Move Up",
+    "moveDown": "Move Down",
+    "selectList": "Please select a task list",
+    "deleteConfirm": "Are you sure you want to delete this task? This action cannot be undone."
+  },
+  "filter": {
+    "title": "Filter",
+    "reset": "Reset",
+    "open": "Open Filters",
+    "close": "Close Filters",
+    "prioritySelected": "Priority: {{count}} selected",
+    "tagsSelected": "Tags: {{count}} selected",
+    "status": {
+      "title": "Status",
+      "all": "All",
+      "active": "Active",
+      "completed": "Completed"
+    },
+    "dueDate": {
+      "title": "Due Date",
+      "all": "All",
+      "overdue": "Overdue",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "thisWeek": "This Week",
+      "nextWeek": "Next Week",
+      "future": "Future"
+    }
+  },
+  "sidebar": {
+    "title": "Task Lists",
+    "toggle": {
+      "show": "Show Lists",
+      "hide": "Hide Lists"
+    }
+  },
+  "priority": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "unset": "Not Set"
+  },
+  "tag": {
+    "unset": "No Tags"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "login": "Login",
+    "logout": "Logout",
+    "account": "Account Settings",
+    "myAccount": "My Account",
+    "user": "User",
+    "language": "Language"
+  }
+} 

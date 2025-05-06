@@ -14,18 +14,22 @@ import {
   Tooltip,
   useMediaQuery,
   useTheme,
+  Divider,
 } from '@mui/material';
 import { signOut, useSession } from 'next-auth/react';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import TaskIcon from '@mui/icons-material/Task';
 import { useStore } from '@/app/lib/store';
+import LanguageSwitcher from '../ui/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 export default function Header() {
   const { data: session } = useSession();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { isSidebarOpen, setSidebarOpen } = useStore();
+  const { t } = useTranslation();
   
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -73,7 +77,7 @@ export default function Header() {
               startIcon={<DashboardIcon />}
               href="/dashboard"
             >
-              ダッシュボード
+              {t('dashboard.title')}
             </Button>
             <Button 
               color="inherit" 
@@ -81,14 +85,19 @@ export default function Header() {
               href="/tasks"
               sx={{ ml: 2 }}
             >
-              タスク
+              {t('tasks.title')}
             </Button>
           </Box>
         )}
         
+        {/* 言語切り替え */}
+        <Box sx={{ mx: 2, display: { xs: 'none', sm: 'block' } }}>
+          <LanguageSwitcher />
+        </Box>
+        
         {session?.user ? (
           <>
-            <Tooltip title="アカウント設定">
+            <Tooltip title={t('common.account')}>
               <IconButton
                 onClick={handleClick}
                 size="small"
@@ -97,7 +106,7 @@ export default function Header() {
                 aria-expanded={open ? 'true' : undefined}
               >
                 <Avatar 
-                  alt={session.user.name || 'ユーザー'} 
+                  alt={session.user.name || t('common.user')} 
                   src={session.user.image || undefined}
                   sx={{ width: 32, height: 32 }}
                 />
@@ -112,16 +121,25 @@ export default function Header() {
               anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
               <MenuItem onClick={handleClose}>
-                マイアカウント
+                {t('common.myAccount')}
               </MenuItem>
+              {/* モバイル画面のみ言語切り替えを表示 */}
+              {isMobile && (
+                <>
+                  <MenuItem>
+                    <LanguageSwitcher />
+                  </MenuItem>
+                  <Divider />
+                </>
+              )}
               <MenuItem onClick={handleLogout}>
-                ログアウト
+                {t('common.logout')}
               </MenuItem>
             </Menu>
           </>
         ) : (
           <Button color="inherit" href="/auth/signin">
-            ログイン
+            {t('common.login')}
           </Button>
         )}
       </Toolbar>
