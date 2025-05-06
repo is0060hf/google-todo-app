@@ -6,6 +6,7 @@ import { Add as AddIcon } from '@mui/icons-material';
 import TaskListSidebar from '../components/tasks/TaskListSidebar';
 import TaskDataGrid from '../components/tasks/TaskDataGrid';
 import TaskModal from '../components/tasks/TaskModal';
+import CustomDataManager from '../components/custom/CustomDataManager';
 import { useTaskStore } from '../store/taskStore';
 
 /**
@@ -28,6 +29,11 @@ export default function TasksPage() {
         {/* サイドバー */}
         <Box sx={{ minWidth: 280, marginRight: 2 }}>
           <TaskListSidebar />
+          
+          {/* カスタムデータ管理コンポーネント */}
+          <Box sx={{ mt: 2 }}>
+            <CustomDataManager />
+          </Box>
         </Box>
 
         {/* メインコンテンツ */}

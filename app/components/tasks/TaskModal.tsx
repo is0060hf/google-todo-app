@@ -35,6 +35,8 @@ import ja from 'date-fns/locale/ja';
 import { Modal } from '../../components/ui/Modal';
 import { useTaskStore, Task, Priority, Tag } from '../../store/taskStore';
 import { useApiGet, useApiPost, useApiPatch } from '../../lib/api-hooks';
+import { PrioritySelector } from '../custom/PrioritySelector';
+import { TagSelector } from '../custom/TagSelector';
 
 interface TaskFormData {
   title: string;
@@ -338,22 +340,11 @@ export function TaskModal() {
 
             {/* 優先度 */}
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>優先度</InputLabel>
-                <MuiSelect
-                  value={formData.priorityId || ''}
-                  onChange={(e) => handleChange('priorityId', e.target.value === '' ? null : e.target.value)}
-                  disabled={modalMode === 'view'}
-                  label="優先度"
-                >
-                  <MenuItem value="">指定なし</MenuItem>
-                  {priorities.map((priority: Priority) => (
-                    <MenuItem key={priority.id} value={priority.id}>
-                      {priority.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+              <PrioritySelector
+                value={formData.priorityId}
+                onChange={(value) => handleChange('priorityId', value)}
+                disabled={modalMode === 'view'}
+              />
             </Grid>
 
             {/* 親タスク選択 */}
@@ -378,33 +369,10 @@ export function TaskModal() {
 
             {/* タグ */}
             <Grid item xs={12}>
-              <Autocomplete
-                multiple
-                options={tags.map((tag: Tag) => tag.id)}
-                getOptionLabel={(tagId: string) => tags.find((tag: Tag) => tag.id === tagId)?.name || ''}
+              <TagSelector
                 value={formData.tags}
-                onChange={(_, newValue) => handleChange('tags', newValue)}
+                onChange={(value) => handleChange('tags', value)}
                 disabled={modalMode === 'view'}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="タグ"
-                    placeholder="タグを選択"
-                    fullWidth
-                  />
-                )}
-                renderTags={(tagIds, getTagProps) =>
-                  tagIds.map((tagId, index) => {
-                    const tag = tags.find((t: Tag) => t.id === tagId);
-                    return (
-                      <Chip
-                        label={tag?.name}
-                        {...getTagProps({ index })}
-                        key={tagId}
-                      />
-                    );
-                  })
-                }
               />
             </Grid>
 
