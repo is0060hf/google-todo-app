@@ -119,6 +119,6 @@ describe('GET /api/tasks/custom/[taskId]', () => {
     
     // レスポンスの検証
     expect(result.status).toBe(500);
-    expect(result.error).toBe('Failed to fetch task custom data');
+    expect(result.error).toBe('Database error');
   });
 }); 

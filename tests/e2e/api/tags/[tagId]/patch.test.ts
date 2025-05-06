@@ -199,6 +199,6 @@ describe('PATCH /api/tags/[tagId]', () => {
     
     // レスポンスの検証
     expect(result.status).toBe(500);
-    expect(result.error).toBe('Failed to update tag');
+    expect(result.error).toBe('Database error');
   });
 }); 

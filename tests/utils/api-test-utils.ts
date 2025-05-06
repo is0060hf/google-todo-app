@@ -1053,4 +1053,119 @@ export const statsApiLogic = {
       return { error: error.message || 'Failed to update stats', status: 500 };
     }
   }
+};
+
+// 認証関連のAPIロジック
+export const authApiLogic = {
+  /**
+   * Googleログインフローの検証ロジック
+   */
+  async verifyGoogleLoginFlow(authCode: string) {
+    try {
+      if (!authCode) {
+        return { error: 'Authorization code is required', status: 400 };
+      }
+      
+      // 実際の実装ではGoogleトークンエンドポイントにリクエストを送信しますが、
+      // テストではモックを使用します
+      const tokens = {
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+        id_token: 'mock-id-token',
+        expires_in: 3600
+      };
+      
+      // トークンデータを返す
+      return { 
+        success: true, 
+        tokens, 
+        status: 200 
+      };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to verify Google login flow', status: 500 };
+    }
+  },
+
+  /**
+   * セッション検証ロジック
+   */
+  async verifySession(sessionData: any) {
+    try {
+      // セッションデータの確認
+      if (!sessionData) {
+        return { error: 'No session data provided', status: 400 };
+      }
+      
+      // セッションデータの検証（必須フィールド）
+      if (!sessionData.user?.id) {
+        return { error: 'Invalid session: user ID is missing', status: 400 };
+      }
+      
+      if (!sessionData.accessToken) {
+        return { error: 'Invalid session: access token is missing', status: 400 };
+      }
+      
+      // セッションが有効であることを示す
+      return { 
+        success: true, 
+        session: sessionData,
+        status: 200 
+      };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to verify session', status: 500 };
+    }
+  },
+
+  /**
+   * 権限チェックロジック
+   */
+  async verifyPermissions(sessionData: any, requiredPermission: string) {
+    try {
+      // セッションデータの確認
+      if (!sessionData) {
+        return { error: 'Authentication required', status: 401 };
+      }
+      
+      const userId = sessionData.user?.id;
+      
+      // ユーザーIDの確認
+      if (!userId) {
+        return { error: 'User ID not found in session', status: 401 };
+      }
+      
+      // アクセストークンの確認
+      if (!sessionData.accessToken) {
+        return { error: 'Access token not found', status: 401 };
+      }
+      
+      // リソースへのアクセス権限のチェック
+      if (requiredPermission === 'tasks' && sessionData.accessToken) {
+        // タスク操作の権限あり
+        return { success: true, status: 200 };
+      }
+      
+      if (requiredPermission === 'admin' && userId === 'admin-user-id') {
+        // 管理者権限あり
+        return { success: true, status: 200 };
+      }
+      
+      // 特定のリソースへのアクセス権限（所有者チェック）
+      if (requiredPermission.startsWith('resource:')) {
+        const resourceId = requiredPermission.split(':')[1];
+        const ownerId = requiredPermission.split(':')[2];
+        
+        if (userId === ownerId) {
+          // リソースの所有者
+          return { success: true, status: 200 };
+        }
+        
+        return { error: 'Forbidden: resource belongs to another user', status: 403 };
+      }
+      
+      // デフォルトでは権限なしとみなす
+      return { error: 'Forbidden: insufficient permissions', status: 403 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to verify permissions', status: 500 };
+    }
+  }
 }; 

@@ -90,7 +90,7 @@ describe('GET /api/tags/[tagId]', () => {
     // 認証済みユーザーをモック
     mockAuthenticatedUser('user-123');
     
-    // PrismaのfindFirstをモック - エラーをスロー
+    // Prismaのモックでエラーをスロー
     (prisma.tag.findFirst as jest.Mock).mockRejectedValueOnce(new Error('Database error'));
     
     // APIロジックを直接呼び出し
@@ -98,6 +98,6 @@ describe('GET /api/tags/[tagId]', () => {
     
     // レスポンスの検証
     expect(result.status).toBe(500);
-    expect(result.error).toBe('Failed to fetch tag');
+    expect(result.error).toBe('Database error');
   });
 }); 

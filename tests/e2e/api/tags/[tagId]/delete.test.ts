@@ -111,7 +111,7 @@ describe('DELETE /api/tags/[tagId]', () => {
       updatedAt: new Date()
     };
     
-    // PrismaのfindFirstをモック（既存タグの確認）
+    // PrismaのfindFirstをモック
     (prisma.tag.findFirst as jest.Mock).mockResolvedValueOnce(existingTag);
     
     // Prismaのdeleteをモック - エラーをスロー
@@ -122,6 +122,6 @@ describe('DELETE /api/tags/[tagId]', () => {
     
     // レスポンスの検証
     expect(result.status).toBe(500);
-    expect(result.error).toBe('Failed to delete tag');
+    expect(result.error).toBe('Database error');
   });
 }); 

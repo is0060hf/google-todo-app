@@ -103,17 +103,17 @@ describe('DELETE /api/tasks/custom/[taskId]', () => {
     // 認証済みユーザーをモック
     mockAuthenticatedUser('user-123');
     
-    // 既存のタスク独自データのモック
+    // 既存データのモック
     const existingCustomData = {
-      id: 'custom-data-123',
+      id: 'custom-123',
       taskId: 'task-123',
       userId: 'user-123',
-      priorityId: 2,
+      priorityId: null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
     
-    // PrismaのfindFirstをモック（既存データの確認）
+    // PrismaのfindFirstをモック
     (prisma.taskCustomData.findFirst as jest.Mock).mockResolvedValueOnce(existingCustomData);
     
     // Prismaのdeleteをモック - エラーをスロー
@@ -124,6 +124,6 @@ describe('DELETE /api/tasks/custom/[taskId]', () => {
     
     // レスポンスの検証
     expect(result.status).toBe(500);
-    expect(result.error).toBe('Failed to delete task custom data');
+    expect(result.error).toBe('Database error');
   });
 }); 

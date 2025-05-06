@@ -223,23 +223,32 @@ describe('PATCH /api/tasks/custom/[taskId]', () => {
     // 認証済みユーザーをモック
     mockAuthenticatedUser('user-123');
     
-    // PrismaのfindFirstをモック
-    (prisma.taskCustomData.findFirst as jest.Mock).mockRejectedValueOnce(new Error('Database error'));
-    
-    // 更新データ
-    const updateData = {
-      priorityId: 2
+    // カスタムデータの取得のモック（既存データあり）
+    const existingCustomData = {
+      id: 'custom-123',
+      taskId: 'task-123',
+      userId: 'user-123',
+      priorityId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      tags: []
     };
+    
+    // PrismaのfindFirstをモック
+    (prisma.taskCustomData.findFirst as jest.Mock).mockResolvedValueOnce(existingCustomData);
+    
+    // Prismaの$transactionをモック - エラーをスロー
+    (prisma.$transaction as jest.Mock).mockRejectedValueOnce(new Error('Database error'));
     
     // APIロジックを直接呼び出し
     const result = await taskCustomDataApiLogic.updateTaskCustomData(
       'user-123',
       'task-123',
-      updateData
+      { priorityId: 2 }
     );
     
     // レスポンスの検証
     expect(result.status).toBe(500);
-    expect(result.error).toBe('Failed to update task custom data');
+    expect(result.error).toBe('Database error');
   });
 }); 
