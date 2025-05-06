@@ -60,6 +60,118 @@ export const tagsApiLogic = {
     } catch (error: any) {
       return { error: error.message || 'Failed to create tag', status: 500 };
     }
+  },
+
+  /**
+   * タグ詳細取得のロジック
+   */
+  async getTag(userId: string, tagId: string) {
+    try {
+      if (!tagId) {
+        return { error: 'Tag ID is required', status: 400 };
+      }
+
+      // ユーザーのタグを取得
+      const tag = await prisma.tag.findFirst({
+        where: {
+          id: tagId,
+          userId // 自分のタグのみアクセス可能
+        }
+      });
+      
+      if (!tag) {
+        return { error: 'Tag not found', status: 404 };
+      }
+      
+      return { tag, status: 200 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to fetch tag', status: 500 };
+    }
+  },
+
+  /**
+   * タグ更新のロジック
+   */
+  async updateTag(userId: string, tagId: string, name: string) {
+    try {
+      if (!tagId) {
+        return { error: 'Tag ID is required', status: 400 };
+      }
+
+      if (!name || typeof name !== 'string' || name.trim() === '') {
+        return { error: 'Tag name is required', status: 400 };
+      }
+
+      // タグの存在確認
+      const existingTag = await prisma.tag.findFirst({
+        where: {
+          id: tagId,
+          userId
+        }
+      });
+
+      if (!existingTag) {
+        return { error: 'Tag not found', status: 404 };
+      }
+
+      // 同名タグの存在確認（更新対象以外）
+      const duplicateTag = await prisma.tag.findFirst({
+        where: {
+          name: name.trim(),
+          userId,
+          id: { not: tagId }
+        }
+      });
+
+      if (duplicateTag) {
+        return { 
+          error: 'Another tag with this name already exists', 
+          status: 409 
+        };
+      }
+
+      // タグを更新
+      const updatedTag = await prisma.tag.update({
+        where: { id: tagId },
+        data: { name: name.trim() }
+      });
+      
+      return { tag: updatedTag, status: 200 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to update tag', status: 500 };
+    }
+  },
+
+  /**
+   * タグ削除のロジック
+   */
+  async deleteTag(userId: string, tagId: string) {
+    try {
+      if (!tagId) {
+        return { error: 'Tag ID is required', status: 400 };
+      }
+
+      // タグの存在確認
+      const existingTag = await prisma.tag.findFirst({
+        where: {
+          id: tagId,
+          userId
+        }
+      });
+
+      if (!existingTag) {
+        return { error: 'Tag not found', status: 404 };
+      }
+
+      // タグを削除
+      await prisma.tag.delete({
+        where: { id: tagId }
+      });
+      
+      return { success: true, status: 200 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to delete tag', status: 500 };
+    }
   }
 };
 
@@ -564,6 +676,381 @@ export const tasksApiLogic = {
       return { task, status: 200 };
     } catch (error: any) {
       return { error: error.message || 'Failed to move task', status: 500 };
+    }
+  }
+};
+
+// 優先度関連のAPIロジック
+export const prioritiesApiLogic = {
+  /**
+   * 優先度一覧取得のロジック
+   */
+  async getPriorities() {
+    try {
+      const priorities = [
+        { id: 1, name: '低', color: '#4CAF50' },
+        { id: 2, name: '中', color: '#FFC107' },
+        { id: 3, name: '高', color: '#F44336' }
+      ];
+      
+      return { priorities, status: 200 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to fetch priorities', status: 500 };
+    }
+  }
+};
+
+// タスク独自データ関連のAPIロジック
+export const taskCustomDataApiLogic = {
+  /**
+   * タスク独自データ取得のロジック
+   */
+  async getTaskCustomData(userId: string, taskId: string) {
+    try {
+      if (!taskId) {
+        return { error: 'Task ID is required', status: 400 };
+      }
+
+      // タスク独自データを取得
+      const customData = await prisma.taskCustomData.findFirst({
+        where: {
+          taskId,
+          userId
+        },
+        include: {
+          tags: true,
+          priority: true
+        }
+      });
+      
+      // データが存在しない場合は空のデータを返す
+      if (!customData) {
+        return { 
+          customData: { 
+            taskId, 
+            userId, 
+            tags: [], 
+            priority: null 
+          }, 
+          status: 200 
+        };
+      }
+      
+      return { customData, status: 200 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to fetch task custom data', status: 500 };
+    }
+  },
+
+  /**
+   * タスク独自データ更新のロジック
+   */
+  async updateTaskCustomData(
+    userId: string, 
+    taskId: string, 
+    data: { 
+      tags?: string[], // タグIDの配列
+      priorityId?: number | null 
+    }
+  ) {
+    try {
+      if (!taskId) {
+        return { error: 'Task ID is required', status: 400 };
+      }
+
+      // 既存のカスタムデータを検索
+      let customData = await prisma.taskCustomData.findFirst({
+        where: {
+          taskId,
+          userId
+        }
+      });
+
+      // トランザクションで更新
+      const updatedCustomData = await prisma.$transaction(async (tx) => {
+        // 既存データがない場合は新規作成
+        if (!customData) {
+          customData = await tx.taskCustomData.create({
+            data: {
+              taskId,
+              userId,
+              priorityId: data.priorityId || null
+            }
+          });
+        } else {
+          // 既存のデータを更新
+          customData = await tx.taskCustomData.update({
+            where: { id: customData.id },
+            data: {
+              priorityId: data.priorityId !== undefined ? data.priorityId : customData.priorityId
+            }
+          });
+        }
+
+        // タグが指定されている場合、関連を更新
+        if (data.tags !== undefined) {
+          // 既存のタグ関連をすべて削除
+          await tx.taskCustomData.update({
+            where: { id: customData.id },
+            data: {
+              tags: {
+                set: [] // 関連をクリア
+              }
+            }
+          });
+
+          // 新しいタグ関連を作成
+          if (data.tags.length > 0) {
+            await tx.taskCustomData.update({
+              where: { id: customData.id },
+              data: {
+                tags: {
+                  connect: data.tags.map(tagId => ({ id: tagId }))
+                }
+              }
+            });
+          }
+        }
+
+        // 更新後のデータを取得して返す
+        return tx.taskCustomData.findFirst({
+          where: { id: customData.id },
+          include: {
+            tags: true,
+            priority: true
+          }
+        });
+      });
+
+      return { customData: updatedCustomData, status: 200 };
+    } catch (error: any) {
+      // 存在しないタグIDなどの関連エラー
+      if (error.code === 'P2025') {
+        return { error: 'One or more tags do not exist', status: 404 };
+      }
+      return { error: error.message || 'Failed to update task custom data', status: 500 };
+    }
+  },
+
+  /**
+   * タスク独自データ削除のロジック
+   */
+  async deleteTaskCustomData(userId: string, taskId: string) {
+    try {
+      if (!taskId) {
+        return { error: 'Task ID is required', status: 400 };
+      }
+
+      // タスク独自データの存在確認
+      const customData = await prisma.taskCustomData.findFirst({
+        where: {
+          taskId,
+          userId
+        }
+      });
+
+      if (!customData) {
+        return { error: 'Task custom data not found', status: 404 };
+      }
+
+      // データを削除
+      await prisma.taskCustomData.delete({
+        where: { id: customData.id }
+      });
+      
+      return { success: true, status: 200 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to delete task custom data', status: 500 };
+    }
+  }
+};
+
+// 統計データ関連のAPIロジック
+export const statsApiLogic = {
+  /**
+   * 日次統計データ取得のロジック
+   */
+  async getDailyStats(userId: string, date: string) {
+    try {
+      if (!date) {
+        return { error: 'Date is required', status: 400 };
+      }
+
+      // 日付の形式チェック（YYYY-MM-DD）
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return { error: 'Date format should be YYYY-MM-DD', status: 400 };
+      }
+
+      // 統計データを取得
+      const stats = await prisma.dailyStats.findFirst({
+        where: {
+          userId,
+          date: new Date(date)
+        }
+      });
+      
+      // データが存在しない場合は空のデータを返す
+      if (!stats) {
+        return { 
+          stats: { 
+            date, 
+            tasksCreated: 0, 
+            tasksCompleted: 0,
+            totalTasks: 0,
+            completionRate: 0
+          }, 
+          status: 200 
+        };
+      }
+      
+      return { stats, status: 200 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to fetch daily stats', status: 500 };
+    }
+  },
+
+  /**
+   * 週次統計データ取得のロジック
+   */
+  async getWeeklyStats(userId: string, weekStart: string) {
+    try {
+      if (!weekStart) {
+        return { error: 'Week start date is required', status: 400 };
+      }
+
+      // 日付の形式チェック（YYYY-MM-DD）
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) {
+        return { error: 'Date format should be YYYY-MM-DD', status: 400 };
+      }
+
+      // 統計データを取得
+      const stats = await prisma.weeklyStats.findFirst({
+        where: {
+          userId,
+          weekStart: new Date(weekStart)
+        }
+      });
+      
+      // データが存在しない場合は空のデータを返す
+      if (!stats) {
+        return { 
+          stats: { 
+            weekStart, 
+            tasksCreated: 0, 
+            tasksCompleted: 0,
+            totalTasks: 0,
+            completionRate: 0
+          }, 
+          status: 200 
+        };
+      }
+      
+      return { stats, status: 200 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to fetch weekly stats', status: 500 };
+    }
+  },
+
+  /**
+   * 月次統計データ取得のロジック
+   */
+  async getMonthlyStats(userId: string, yearMonth: string) {
+    try {
+      if (!yearMonth) {
+        return { error: 'Year and month are required', status: 400 };
+      }
+
+      // 形式チェック（YYYY-MM）
+      if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
+        return { error: 'Format should be YYYY-MM', status: 400 };
+      }
+
+      // 統計データを取得
+      const stats = await prisma.monthlyStats.findFirst({
+        where: {
+          userId,
+          yearMonth
+        }
+      });
+      
+      // データが存在しない場合は空のデータを返す
+      if (!stats) {
+        return { 
+          stats: { 
+            yearMonth, 
+            tasksCreated: 0, 
+            tasksCompleted: 0,
+            totalTasks: 0,
+            completionRate: 0
+          }, 
+          status: 200 
+        };
+      }
+      
+      return { stats, status: 200 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to fetch monthly stats', status: 500 };
+    }
+  },
+
+  /**
+   * 年次統計データ取得のロジック
+   */
+  async getYearlyStats(userId: string, year: string) {
+    try {
+      if (!year) {
+        return { error: 'Year is required', status: 400 };
+      }
+
+      // 形式チェック（YYYY）
+      if (!/^\d{4}$/.test(year)) {
+        return { error: 'Format should be YYYY', status: 400 };
+      }
+
+      // 統計データを取得
+      const stats = await prisma.yearlyStats.findFirst({
+        where: {
+          userId,
+          year: parseInt(year, 10)
+        }
+      });
+      
+      // データが存在しない場合は空のデータを返す
+      if (!stats) {
+        return { 
+          stats: { 
+            year: parseInt(year, 10), 
+            tasksCreated: 0, 
+            tasksCompleted: 0,
+            totalTasks: 0,
+            completionRate: 0
+          }, 
+          status: 200 
+        };
+      }
+      
+      return { stats, status: 200 };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to fetch yearly stats', status: 500 };
+    }
+  },
+
+  /**
+   * 統計データ更新のロジック
+   */
+  async updateStats(userId: string) {
+    try {
+      // 実際のアプリケーションでは、ここでGoogle TasksのAPIから
+      // 最新のタスクデータを取得し、統計情報を計算して更新する
+
+      // このテスト用のモックでは、更新成功を返す
+      return { 
+        success: true,
+        message: 'Stats updated successfully',
+        status: 200 
+      };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to update stats', status: 500 };
     }
   }
 }; 
