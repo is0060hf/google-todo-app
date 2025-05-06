@@ -14,6 +14,10 @@ export type { SelectProps, SelectOption } from './Select';
 export { Modal } from './Modal';
 export type { ModalProps } from './Modal';
 
+// 確認ダイアログコンポーネント
+export { ConfirmDialog } from './ConfirmDialog';
+export type { ConfirmDialogProps } from './ConfirmDialog';
+
 // アラートコンポーネント
 export { Alert, SnackbarAlert } from './Alert';
 export type { AlertProps, SnackbarAlertProps } from './Alert';
