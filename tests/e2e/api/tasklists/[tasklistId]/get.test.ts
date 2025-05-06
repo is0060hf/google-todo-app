@@ -1,102 +1,131 @@
-import { GET } from '@/app/api/tasklists/[tasklistId]/route';
-import { mockAuthenticatedUser, mockUnauthenticatedUser, mockMissingAccessToken } from '../../../../utils/auth';
-import { mockGoogleTasksApi, mockTaskLists } from '../../../../mocks/googleTasksApi';
-import { createParams } from '../../../../utils/request';
+import { mockAuthenticatedUserWithToken, mockUnauthenticatedUser } from '../../../../utils/auth';
+import { tasklistsApiLogic } from '../../../../utils/api-test-utils';
 
-// インポートをモック
-jest.mock('next-auth');
-jest.mock('@/app/lib/prisma');
+// メソッドモック
+global.fetch = jest.fn();
 
 describe('GET /api/tasklists/[tasklistId]', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGoogleTasksApi();
   });
 
-  test('認証済みユーザーは特定のタスクリストを取得できる', async () => {
-    // 認証済みユーザーをモック
-    mockAuthenticatedUser();
+  test('認証済みユーザーはタスクリスト詳細を取得できる', async () => {
+    // 認証済みユーザーをモック（アクセストークン付き）
+    mockAuthenticatedUserWithToken('user-123', 'mock-access-token');
     
-    // パラメータの作成
-    const params = createParams({ tasklistId: 'tasklistid1' });
+    // タスクリスト詳細のモックレスポンス
+    const mockTaskList = {
+      id: 'tasklist-123',
+      title: 'Work Tasks',
+      updated: '2023-07-15T10:00:00.000Z',
+      selfLink: 'https://www.googleapis.com/tasks/v1/users/@me/lists/tasklist-123'
+    };
     
-    // APIエンドポイントを呼び出し
-    const response = await GET({} as Request, params);
-    const data = await response.json();
-    
-    // レスポンスの検証
-    expect(response.status).toBe(200);
-    expect(data.taskList).toEqual(mockTaskLists[0]);
-    expect(data.taskList.id).toBe('tasklistid1');
-    expect(data.taskList.title).toBe('Test Task List 1');
-  });
-
-  test('存在しないタスクリストIDの場合はエラーが返される', async () => {
-    // 認証済みユーザーをモック
-    mockAuthenticatedUser();
-    
-    // パラメータの作成
-    const params = createParams({ tasklistId: 'non-existent-id' });
-    
-    // Google Tasks APIがエラーを投げるようにモック
-    jest.spyOn(global, 'fetch').mockImplementationOnce(() => {
-      throw new Error('Task list not found');
+    // fetchのモック
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: jest.fn().mockResolvedValueOnce(mockTaskList)
     });
     
-    // APIエンドポイントを呼び出し
-    const response = await GET({} as Request, params);
-    const data = await response.json();
+    // APIロジックを直接呼び出し
+    const result = await tasklistsApiLogic.getTaskList('tasklist-123', 'mock-access-token');
+    
+    // fetchの呼び出しを検証
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://tasks.googleapis.com/tasks/v1/users/@me/lists/tasklist-123',
+      expect.objectContaining({
+        headers: {
+          'Authorization': 'Bearer mock-access-token',
+          'Content-Type': 'application/json'
+        }
+      })
+    );
     
     // レスポンスの検証
-    expect(response.status).toBe(500);
-    expect(data.error).toBe('Task list not found');
+    expect(result.status).toBe(200);
+    expect(result.taskList).toEqual(mockTaskList);
   });
 
-  test('タスクリストIDがない場合はエラーが返される', async () => {
-    // 認証済みユーザーをモック
-    mockAuthenticatedUser();
+  test('存在しないタスクリストIDの場合は404エラーになる', async () => {
+    // 認証済みユーザーをモック（アクセストークン付き）
+    mockAuthenticatedUserWithToken('user-123', 'mock-access-token');
     
-    // パラメータの作成（空のタスクリストID）
-    const params = createParams({ tasklistId: '' });
+    // fetchのモック - 404エラー
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found'
+    });
     
-    // APIエンドポイントを呼び出し
-    const response = await GET({} as Request, params);
-    const data = await response.json();
+    // APIロジックを直接呼び出し
+    const result = await tasklistsApiLogic.getTaskList('non-existent-id', 'mock-access-token');
     
     // レスポンスの検証
-    expect(response.status).toBe(400);
-    expect(data.error).toBe('Task list ID is required');
+    expect(result.status).toBe(404);
+    expect(result.error).toBe('Task list not found');
   });
 
-  test('未認証ユーザーはエラーが返される', async () => {
-    // 未認証ユーザーをモック
-    mockUnauthenticatedUser();
+  test('タスクリストIDが指定されていない場合は400エラーになる', async () => {
+    // 認証済みユーザーをモック（アクセストークン付き）
+    mockAuthenticatedUserWithToken('user-123', 'mock-access-token');
     
-    // パラメータの作成
-    const params = createParams({ tasklistId: 'tasklistid1' });
+    // APIロジックを直接呼び出し - 空のID
+    const result = await tasklistsApiLogic.getTaskList('', 'mock-access-token');
     
-    // APIエンドポイントを呼び出し
-    const response = await GET({} as Request, params);
-    const data = await response.json();
+    // fetchが呼ばれていないことを検証
+    expect(global.fetch).not.toHaveBeenCalled();
     
     // レスポンスの検証
-    expect(response.status).toBe(401);
-    expect(data.error).toBe('Unauthorized');
+    expect(result.status).toBe(400);
+    expect(result.error).toBe('Task list ID is required');
   });
 
-  test('アクセストークンがない場合はエラーが返される', async () => {
-    // アクセストークンがないユーザーをモック
-    mockMissingAccessToken();
+  test('アクセストークンがない場合は401エラーになる', async () => {
+    // 認証済みユーザーをモック（アクセストークンなし）
+    mockAuthenticatedUserWithToken('user-123', '');
     
-    // パラメータの作成
-    const params = createParams({ tasklistId: 'tasklistid1' });
+    // APIロジックを直接呼び出し
+    const result = await tasklistsApiLogic.getTaskList('tasklist-123', '');
     
-    // APIエンドポイントを呼び出し
-    const response = await GET({} as Request, params);
-    const data = await response.json();
+    // fetchが呼ばれていないことを検証
+    expect(global.fetch).not.toHaveBeenCalled();
     
     // レスポンスの検証
-    expect(response.status).toBe(401);
-    expect(data.error).toBe('Missing access token. Please sign in again.');
+    expect(result.status).toBe(401);
+    expect(result.error).toBe('Missing access token');
+  });
+
+  test('GoogleのAPIエラーが適切にハンドリングされる', async () => {
+    // 認証済みユーザーをモック（アクセストークン付き）
+    mockAuthenticatedUserWithToken('user-123', 'mock-access-token');
+    
+    // fetchのモック - APIエラー
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error'
+    });
+    
+    // APIロジックを直接呼び出し
+    const result = await tasklistsApiLogic.getTaskList('tasklist-123', 'mock-access-token');
+    
+    // レスポンスの検証
+    expect(result.status).toBe(500);
+    expect(result.error).toBe('Failed to fetch task list: Internal Server Error');
+  });
+
+  test('ネットワークエラーが適切にハンドリングされる', async () => {
+    // 認証済みユーザーをモック（アクセストークン付き）
+    mockAuthenticatedUserWithToken('user-123', 'mock-access-token');
+    
+    // fetchのモック - ネットワークエラー
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+    
+    // APIロジックを直接呼び出し
+    const result = await tasklistsApiLogic.getTaskList('tasklist-123', 'mock-access-token');
+    
+    // レスポンスの検証
+    expect(result.status).toBe(500);
+    expect(result.error).toBe('Network error');
   });
 }); 

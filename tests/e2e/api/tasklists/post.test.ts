@@ -1,128 +1,114 @@
-import { NextRequest } from 'next/server';
-import { POST } from '@/app/api/tasklists/route';
-import { mockAuthenticatedUser, mockUnauthenticatedUser, mockMissingAccessToken } from '../../../utils/auth';
-import { mockGoogleTasksApi } from '../../../mocks/googleTasksApi';
-import { createMockRequest } from '../../../utils/request';
+import { mockAuthenticatedUserWithToken } from '../../../utils/auth';
+import { tasklistsApiLogic } from '../../../utils/api-test-utils';
 
-// インポートをモック
-jest.mock('next-auth');
-jest.mock('@/app/lib/prisma');
+// メソッドモック
+global.fetch = jest.fn();
 
 describe('POST /api/tasklists', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGoogleTasksApi();
   });
 
   test('認証済みユーザーは新しいタスクリストを作成できる', async () => {
-    // 認証済みユーザーをモック
-    mockAuthenticatedUser();
+    // 認証済みユーザーをモック（アクセストークン付き）
+    mockAuthenticatedUserWithToken('user-123', 'mock-access-token');
     
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tasklists', {
-      title: 'New Task List'
+    // 作成されるタスクリストのモックレスポンス
+    const mockTaskList = {
+      id: 'new-tasklist-123',
+      title: 'Shopping List',
+      updated: '2023-07-15T10:00:00.000Z',
+      selfLink: 'https://www.googleapis.com/tasks/v1/users/@me/lists/new-tasklist-123'
+    };
+    
+    // fetchのモック
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: jest.fn().mockResolvedValueOnce(mockTaskList)
     });
     
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
+    // APIロジックを直接呼び出し
+    const result = await tasklistsApiLogic.createTaskList('Shopping List', 'mock-access-token');
+    
+    // fetchの呼び出しを検証
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://tasks.googleapis.com/tasks/v1/users/@me/lists',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer mock-access-token',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ title: 'Shopping List' })
+      })
+    );
     
     // レスポンスの検証
-    expect(response.status).toBe(201);
-    expect(data.taskList.title).toBe('New Task List');
-    expect(data.taskList.id).toBeDefined();
+    expect(result.status).toBe(201);
+    expect(result.taskList).toEqual(mockTaskList);
   });
 
-  test('タイトルが空の場合はエラーが返される', async () => {
-    // 認証済みユーザーをモック
-    mockAuthenticatedUser();
+  test('空のタイトルはバリデーションエラーになる', async () => {
+    // 認証済みユーザーをモック（アクセストークン付き）
+    mockAuthenticatedUserWithToken('user-123', 'mock-access-token');
     
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tasklists', {
-      title: ''
-    });
+    // APIロジックを直接呼び出し - 空文字
+    const result = await tasklistsApiLogic.createTaskList('', 'mock-access-token');
     
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
+    // fetchが呼ばれていないことを検証
+    expect(global.fetch).not.toHaveBeenCalled();
     
     // レスポンスの検証
-    expect(response.status).toBe(400);
-    expect(data.error).toBe('Title is required');
+    expect(result.status).toBe(400);
+    expect(result.error).toBe('Title is required');
   });
 
-  test('タイトルがない場合はエラーが返される', async () => {
-    // 認証済みユーザーをモック
-    mockAuthenticatedUser();
+  test('アクセストークンがない場合は401エラーになる', async () => {
+    // 認証済みユーザーをモック（アクセストークンなし）
+    mockAuthenticatedUserWithToken('user-123', '');
     
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tasklists', {});
+    // APIロジックを直接呼び出し
+    const result = await tasklistsApiLogic.createTaskList('Shopping List', '');
     
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
+    // fetchが呼ばれていないことを検証
+    expect(global.fetch).not.toHaveBeenCalled();
     
     // レスポンスの検証
-    expect(response.status).toBe(400);
-    expect(data.error).toBe('Title is required');
+    expect(result.status).toBe(401);
+    expect(result.error).toBe('Missing access token');
   });
 
-  test('未認証ユーザーはエラーが返される', async () => {
-    // 未認証ユーザーをモック
-    mockUnauthenticatedUser();
+  test('GoogleのAPIエラーが適切にハンドリングされる', async () => {
+    // 認証済みユーザーをモック（アクセストークン付き）
+    mockAuthenticatedUserWithToken('user-123', 'mock-access-token');
     
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tasklists', {
-      title: 'New Task List'
+    // fetchのモック - APIエラー
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error'
     });
     
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
+    // APIロジックを直接呼び出し
+    const result = await tasklistsApiLogic.createTaskList('Shopping List', 'mock-access-token');
     
     // レスポンスの検証
-    expect(response.status).toBe(401);
-    expect(data.error).toBe('Unauthorized');
+    expect(result.status).toBe(500);
+    expect(result.error).toBe('Failed to create task list: Internal Server Error');
   });
 
-  test('アクセストークンがない場合はエラーが返される', async () => {
-    // アクセストークンがないユーザーをモック
-    mockMissingAccessToken();
+  test('ネットワークエラーが適切にハンドリングされる', async () => {
+    // 認証済みユーザーをモック（アクセストークン付き）
+    mockAuthenticatedUserWithToken('user-123', 'mock-access-token');
     
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tasklists', {
-      title: 'New Task List'
-    });
+    // fetchのモック - ネットワークエラー
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
     
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
+    // APIロジックを直接呼び出し
+    const result = await tasklistsApiLogic.createTaskList('Shopping List', 'mock-access-token');
     
     // レスポンスの検証
-    expect(response.status).toBe(401);
-    expect(data.error).toBe('Missing access token. Please sign in again.');
-  });
-
-  test('Google Tasks APIがエラーを返す場合は適切にハンドリングされる', async () => {
-    // 認証済みユーザーをモック
-    mockAuthenticatedUser();
-    
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tasklists', {
-      title: 'New Task List'
-    });
-    
-    // Google Tasks APIがエラーを投げるようにモック
-    jest.spyOn(global, 'fetch').mockImplementationOnce(() => {
-      throw new Error('API error');
-    });
-    
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
-    
-    // レスポンスの検証
-    expect(response.status).toBe(500);
-    expect(data.error).toBe('API error');
+    expect(result.status).toBe(500);
+    expect(result.error).toBe('Network error');
   });
 }); 

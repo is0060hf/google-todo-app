@@ -16,6 +16,21 @@ export function mockAuthenticatedUser(userId = 'test-user-id') {
 }
 
 /**
+ * カスタムアクセストークンを持つ認証済みユーザーのセッションをモックする
+ */
+export function mockAuthenticatedUserWithToken(userId = 'test-user-id', accessToken = 'mock-access-token') {
+  (getServerSession as jest.Mock).mockImplementation(() => ({
+    user: {
+      id: userId,
+      name: 'Test User',
+      email: 'test@example.com',
+      image: 'https://example.com/avatar.jpg',
+    },
+    accessToken: accessToken
+  }));
+}
+
+/**
  * 未認証状態をモックする
  */
 export function mockUnauthenticatedUser() {

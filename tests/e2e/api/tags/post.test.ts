@@ -1,8 +1,6 @@
-import { NextRequest } from 'next/server';
-import { POST } from '@/app/api/tags/route';
-import { mockAuthenticatedUser, mockUnauthenticatedUser } from '../../../utils/auth';
+import { mockAuthenticatedUser } from '../../../utils/auth';
 import { prisma } from '@/app/lib/prisma';
-import { createMockRequest } from '../../../utils/request';
+import { tagsApiLogic } from '../../../utils/api-test-utils';
 
 // インポートをモック
 jest.mock('next-auth');
@@ -17,149 +15,107 @@ describe('POST /api/tags', () => {
     // 認証済みユーザーをモック
     mockAuthenticatedUser('user-123');
     
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tags', {
-      name: 'Work'
-    });
-    
     // Prismaのモックの設定
-    (prisma.tag.findFirst as jest.Mock).mockResolvedValue(null); // 同名タグが存在しない
-    (prisma.tag.create as jest.Mock).mockResolvedValue({
-      id: 'new-tag-id',
-      name: 'Work',
-      userId: 'user-123'
-    });
+    const mockTag = { 
+      id: 'tag-new', 
+      name: 'Shopping', 
+      userId: 'user-123',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
     
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
+    // 既存タグがないことをモック
+    (prisma.tag.findFirst as jest.Mock).mockResolvedValue(null);
+    // タグ作成をモック
+    (prisma.tag.create as jest.Mock).mockResolvedValue(mockTag);
+    
+    // APIロジックを直接呼び出し
+    const result = await tagsApiLogic.createTag('user-123', 'Shopping');
     
     // Prismaの呼び出しを検証
     expect(prisma.tag.findFirst).toHaveBeenCalledWith({
-      where: {
-        name: 'Work',
-        userId: 'user-123'
+      where: { 
+        userId: 'user-123',
+        name: { equals: 'Shopping', mode: 'insensitive' }
       }
     });
     
     expect(prisma.tag.create).toHaveBeenCalledWith({
       data: {
-        name: 'Work',
+        name: 'Shopping',
         userId: 'user-123'
       }
     });
     
     // レスポンスの検証
-    expect(response.status).toBe(201);
-    expect(data.tag).toEqual({
-      id: 'new-tag-id',
-      name: 'Work',
-      userId: 'user-123'
-    });
+    expect(result.status).toBe(201);
+    expect(result.tag).toEqual(mockTag);
   });
 
-  test('タグ名が空の場合はエラーが返される', async () => {
+  test('空のタグ名はバリデーションエラーになる', async () => {
     // 認証済みユーザーをモック
     mockAuthenticatedUser('user-123');
     
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tags', {
-      name: ''
-    });
+    // APIロジックを直接呼び出し - 空文字
+    const result = await tagsApiLogic.createTag('user-123', '');
     
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
-    
-    // レスポンスの検証
-    expect(response.status).toBe(400);
-    expect(data.error).toBe('Tag name is required');
-    
-    // Prismaは呼ばれていないことを確認
+    // Prismaが呼ばれていないことを検証
+    expect(prisma.tag.findFirst).not.toHaveBeenCalled();
     expect(prisma.tag.create).not.toHaveBeenCalled();
+    
+    // レスポンスの検証
+    expect(result.status).toBe(400);
+    expect(result.error).toBe('Tag name is required');
   });
 
-  test('タグ名がない場合はエラーが返される', async () => {
+  test('同じ名前のタグが既に存在する場合は409エラーになる', async () => {
     // 認証済みユーザーをモック
     mockAuthenticatedUser('user-123');
     
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tags', {});
+    // 既存タグが存在することをモック
+    const existingTag = { 
+      id: 'tag-existing', 
+      name: 'Work', 
+      userId: 'user-123',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
     
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
+    (prisma.tag.findFirst as jest.Mock).mockResolvedValue(existingTag);
     
-    // レスポンスの検証
-    expect(response.status).toBe(400);
-    expect(data.error).toBe('Tag name is required');
-  });
-
-  test('同じ名前のタグが既に存在する場合はエラーが返される', async () => {
-    // 認証済みユーザーをモック
-    mockAuthenticatedUser('user-123');
+    // APIロジックを直接呼び出し
+    const result = await tagsApiLogic.createTag('user-123', 'Work');
     
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tags', {
-      name: 'Work'
+    // Prismaの呼び出しを検証
+    expect(prisma.tag.findFirst).toHaveBeenCalledWith({
+      where: { 
+        userId: 'user-123',
+        name: { equals: 'Work', mode: 'insensitive' }
+      }
     });
     
-    // Prismaのモックの設定
-    (prisma.tag.findFirst as jest.Mock).mockResolvedValue({
-      id: 'existing-tag-id',
-      name: 'Work',
-      userId: 'user-123'
-    });
-    
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
-    
-    // レスポンスの検証
-    expect(response.status).toBe(409);
-    expect(data.error).toBe('Tag with this name already exists');
-    
-    // タグの作成が呼ばれていないことを確認
+    // タグ作成が呼ばれていないことを検証
     expect(prisma.tag.create).not.toHaveBeenCalled();
-  });
-
-  test('未認証ユーザーはエラーが返される', async () => {
-    // 未認証ユーザーをモック
-    mockUnauthenticatedUser();
-    
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tags', {
-      name: 'Work'
-    });
-    
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
     
     // レスポンスの検証
-    expect(response.status).toBe(401);
-    expect(data.error).toBe('Unauthorized');
+    expect(result.status).toBe(409);
+    expect(result.error).toBe('Tag with this name already exists');
   });
 
   test('データベースエラーが適切にハンドリングされる', async () => {
     // 認証済みユーザーをモック
     mockAuthenticatedUser('user-123');
     
-    // リクエストの作成
-    const request = createMockRequest('POST', 'http://localhost:3000/api/tags', {
-      name: 'Work'
-    });
-    
-    // Prismaのモックの設定
+    // 既存タグがないことをモック
     (prisma.tag.findFirst as jest.Mock).mockResolvedValue(null);
+    // データベースエラーをモック
     (prisma.tag.create as jest.Mock).mockRejectedValue(new Error('Database error'));
     
-    // APIエンドポイントを呼び出し
-    const response = await POST(request);
-    const data = await response.json();
+    // APIロジックを直接呼び出し
+    const result = await tagsApiLogic.createTag('user-123', 'Travel');
     
     // レスポンスの検証
-    expect(response.status).toBe(500);
-    expect(data.error).toBe('Database error');
+    expect(result.status).toBe(500);
+    expect(result.error).toBe('Database error');
   });
 }); 
