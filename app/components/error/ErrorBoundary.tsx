@@ -3,6 +3,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button, Paper, Alert } from '@mui/material';
 import { ErrorOutline as ErrorIcon } from '@mui/icons-material';
+import * as Sentry from '@sentry/nextjs';
 
 interface Props {
   children: ReactNode;
@@ -17,6 +18,7 @@ interface State {
 
 /**
  * アプリケーション全体のエラーをキャッチするエラーバウンダリコンポーネント
+ * Sentryと統合してエラー監視を行います
  */
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -44,7 +46,52 @@ class ErrorBoundary extends Component<Props, State> {
       errorInfo
     });
 
-    // ここで外部エラー監視サービス（例：Sentry）にエラーを送信することも可能
+    // Sentryにエラーを送信
+    Sentry.withScope((scope) => {
+      // エラー情報を付加
+      scope.setExtras({
+        componentStack: errorInfo.componentStack,
+        ...this.extractErrorContext()
+      });
+      
+      // エラーの種類に応じてタグを設定
+      if (error.name) {
+        scope.setTag('error.type', error.name);
+      }
+      
+      // エラーの重大度を設定
+      scope.setLevel(Sentry.Severity.Error);
+      
+      // エラーを送信
+      Sentry.captureException(error);
+    });
+  }
+
+  // エラーの文脈情報を抽出するヘルパーメソッド
+  extractErrorContext(): Record<string, any> {
+    try {
+      // 現在のURL
+      const context: Record<string, any> = {
+        url: window.location.href,
+        userAgent: navigator.userAgent
+      };
+      
+      // ブラウザの言語設定
+      if (navigator.language) {
+        context.language = navigator.language;
+      }
+      
+      // 画面サイズ
+      context.screenSize = {
+        width: window.innerWidth,
+        height: window.innerHeight
+      };
+      
+      return context;
+    } catch (e) {
+      console.error('Error while extracting context:', e);
+      return {};
+    }
   }
 
   handleReset = (): void => {
@@ -54,6 +101,26 @@ class ErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null
     });
+  };
+
+  handleReportIssue = (): void => {
+    // Sentryのユーザーフィードバックを収集（オプション）
+    if (this.state.error) {
+      Sentry.showReportDialog({
+        eventId: Sentry.lastEventId(),
+        title: 'エラーが発生しました',
+        subtitle: '開発チームに問題を報告し、改善にご協力ください',
+        subtitle2: '必要に応じて問題の詳細を記入してください',
+        labelName: 'お名前',
+        labelEmail: 'メールアドレス',
+        labelComments: '詳細',
+        labelClose: '閉じる',
+        labelSubmit: '送信',
+        successMessage: 'フィードバックをありがとうございます！',
+        errorFormEntry: '全ての必須フィールドに入力してください',
+        errorGeneric: '送信中にエラーが発生しました。もう一度お試しください'
+      });
+    }
   };
 
   render(): ReactNode {
@@ -91,14 +158,22 @@ class ErrorBoundary extends Component<Props, State> {
             <Alert severity="error" sx={{ my: 2, textAlign: 'left' }}>
               {this.state.error?.message || 'アプリケーションでエラーが発生しました。'}
             </Alert>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={this.handleReset}
-              sx={{ mt: 2 }}
-            >
-              リセット
-            </Button>
+            <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={this.handleReset}
+              >
+                リセット
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={this.handleReportIssue}
+              >
+                問題を報告
+              </Button>
+            </Box>
             {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
               <Box sx={{ mt: 3, textAlign: 'left' }}>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
