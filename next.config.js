@@ -5,6 +5,25 @@
 const { withSentryConfig } = require('@sentry/nextjs');
 
 const nextConfig = {
+  // パフォーマンス最適化のための設定
+  poweredByHeader: false, // 'X-Powered-By'ヘッダーを無効化
+  reactStrictMode: true,
+  compress: true, // HTTP圧縮を有効化
+  
+  // 画像最適化設定
+  images: {
+    domains: ['lh3.googleusercontent.com'], // Google avatarのドメインを許可
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
+  },
+
+  // コード分割の最適化
+  experimental: {
+    optimizeCss: true, // CSSの最適化
+    scrollRestoration: true, // スクロール位置の復元
+  },
+
   async headers() {
     return [
       {
@@ -44,6 +63,10 @@ const nextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=31536000'
           }
         ]
       }

@@ -19,7 +19,7 @@ import {
 import TaskListSidebar from '../components/tasks/TaskListSidebar';
 import TaskDataGrid from '../components/tasks/TaskDataGrid';
 import TaskFilterBar from '../components/tasks/TaskFilterBar';
-import TaskModal from '../components/tasks/TaskModal';
+import LazyTaskModal from '../components/tasks/LazyTaskModal';
 import CustomDataManager from '../components/custom/CustomDataManager';
 import FilterDrawer from '../components/tasks/FilterDrawer';
 import { useTaskStore } from '../store/taskStore';
@@ -144,7 +144,7 @@ export default function TasksPage() {
       </Box>
       
       {/* タスク作成・編集モーダル */}
-      <TaskModal />
+      <LazyTaskModal />
       
       {/* モバイル用フィルタードロワー */}
       <FilterDrawer 

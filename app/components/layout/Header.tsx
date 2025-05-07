@@ -7,7 +7,6 @@ import {
   Typography, 
   Button, 
   IconButton, 
-  Avatar, 
   Menu, 
   MenuItem, 
   Box,
@@ -20,9 +19,10 @@ import { signOut, useSession } from 'next-auth/react';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import TaskIcon from '@mui/icons-material/Task';
-import { useStore } from '@/app/lib/store';
+import { useStore } from '../../lib/store';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
+import OptimizedAvatar from '../ui/OptimizedAvatar';
 
 export default function Header() {
   const { data: session } = useSession();
@@ -105,10 +105,12 @@ export default function Header() {
                 aria-haspopup="true"
                 aria-expanded={open ? 'true' : undefined}
               >
-                <Avatar 
+                <OptimizedAvatar 
                   alt={session.user.name || t('common.user')} 
                   src={session.user.image || undefined}
                   sx={{ width: 32, height: 32 }}
+                  width={32}
+                  height={32}
                 />
               </IconButton>
             </Tooltip>
