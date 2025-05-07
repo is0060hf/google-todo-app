@@ -21,6 +21,8 @@ import {
   useTheme,
   Button,
   CircularProgress,
+  useMediaQuery,
+  Theme,
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
@@ -35,6 +37,7 @@ import {
 import { useTaskStore, Task, useFilteredTasks } from '../../store/taskStore';
 import { useApiGet, useApiPatch, useApiDelete, useApiPost } from '../../lib/api-hooks';
 import { Loading, ConfirmDialog } from '../../components/ui';
+import TaskCard from './TaskCard';
 
 // 日付をフォーマットする関数
 const formatDate = (dateString?: string) => {
@@ -61,6 +64,7 @@ interface TaskCustomDataRecord {
 /**
  * タスク一覧表示用のDataGridコンポーネント
  * MUI X DataGridを使用してタスクを表形式で表示します
+ * モバイル表示時はカード形式に切り替わります
  */
 export function TaskDataGrid() {
   // タスクの状態管理
@@ -100,6 +104,9 @@ export function TaskDataGrid() {
 
   // 一度に取得するタスク数
   const maxResults = 50; // 一度に50件ずつ取得（API制限を考慮）
+
+  // モバイル表示の判定
+  const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
 
   // タスク一覧のデータ取得
   const { 
@@ -670,6 +677,87 @@ export function TaskDataGrid() {
     );
   }
 
+  // モバイル表示（カード形式）
+  if (isMobile) {
+    return (
+      <>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            タスク一覧 ({hierarchicalTasks.length}件)
+          </Typography>
+        </Box>
+        
+        {hierarchicalTasks.length === 0 ? (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography color="text.secondary">
+              タスクはありません
+            </Typography>
+          </Box>
+        ) : (
+          <Box>
+            {hierarchicalTasks.map(task => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                customData={customData}
+                priorities={priorities}
+                tags={tags}
+                onStatusChange={toggleTaskStatus}
+                onEdit={handleEditTask}
+                onDelete={openDeleteDialog}
+              />
+            ))}
+            
+            {/* 追加データロード中の表示 */}
+            {isLoadingMore && (
+              <Box sx={{ textAlign: 'center', p: 2 }}>
+                <CircularProgress size={24} />
+                <Typography variant="body2" sx={{ ml: 1 }}>
+                  追加のタスクを読み込み中...
+                </Typography>
+              </Box>
+            )}
+            
+            {/* もっと読み込むボタン */}
+            {hasMoreData && !isLoadingMore && !loadedAllData && (
+              <Box sx={{ textAlign: 'center', p: 2 }}>
+                <Button 
+                  variant="outlined" 
+                  onClick={loadMoreTasks}
+                  startIcon={<ExpandMoreIcon />}
+                  fullWidth
+                >
+                  さらに読み込む
+                </Button>
+              </Box>
+            )}
+            
+            {/* 全データ読み込み完了メッセージ */}
+            {loadedAllData && tasks.length > maxResults && (
+              <Box sx={{ textAlign: 'center', p: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  すべてのタスクを読み込みました（合計: {tasks.length}件）
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        )}
+        
+        {/* 削除確認ダイアログ */}
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          title="タスクの削除"
+          message="このタスクを削除してもよろしいですか？この操作は元に戻せません。"
+          confirmText="削除"
+          cancelText="キャンセル"
+          onConfirm={confirmDeleteTask}
+          onCancel={closeDeleteDialog}
+        />
+      </>
+    );
+  }
+
+  // デスクトップ表示（DataGrid）
   return (
     <>
       <div className="visually-hidden" id="keyboard-instructions">

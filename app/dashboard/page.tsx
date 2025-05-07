@@ -8,7 +8,9 @@ import {
   Paper,
   Box,
   Alert,
-  CircularProgress
+  CircularProgress,
+  useMediaQuery,
+  Theme
 } from '@mui/material';
 import PeriodSelector, { PeriodType } from '../components/dashboard/PeriodSelector';
 import CompletedTasksChart from '../components/dashboard/CompletedTasksChart';
@@ -22,6 +24,7 @@ export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [period, setPeriod] = useState<PeriodType>('monthly');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
   
   const { 
     data, 
@@ -53,7 +56,7 @@ export default function DashboardPage() {
   }
   
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, pb: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         ダッシュボード
       </Typography>
@@ -65,54 +68,102 @@ export default function DashboardPage() {
         onDateChange={setCurrentDate}
       />
       
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-        {/* 統計グラフ */}
-        <Box sx={{ width: { xs: '100%', md: 'calc(50% - 1.5rem)' } }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mt: 3 }}>
+        {/* 完了タスク数グラフ */}
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: { xs: 2, md: 3 },
+            height: '100%', 
+            minHeight: { xs: '300px', md: '400px' },
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
           <CompletedTasksChart
             data={data}
             period={period}
             loading={loading}
             error={error ? error : null}
           />
-        </Box>
+        </Paper>
         
-        <Box sx={{ width: { xs: '100%', md: 'calc(50% - 1.5rem)' } }}>
+        {/* 完了率グラフ */}
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: { xs: 2, md: 3 },
+            height: '100%', 
+            minHeight: { xs: '300px', md: '400px' },
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
           <CompletionRateChart
             data={data}
             period={period}
             loading={loading}
             error={error ? error : null}
           />
-        </Box>
+        </Paper>
         
-        <Box sx={{ width: { xs: '100%', md: 'calc(50% - 1.5rem)' } }}>
+        {/* 作成/完了比較グラフ */}
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: { xs: 2, md: 3 },
+            height: '100%', 
+            minHeight: { xs: '300px', md: '400px' },
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
           <CreatedVsCompletedChart
             data={data}
             period={period}
             loading={loading}
             error={error ? error : null}
           />
-        </Box>
+        </Paper>
         
-        <Box sx={{ width: { xs: '100%', md: 'calc(50% - 1.5rem)' } }}>
+        {/* 分布円グラフ */}
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: { xs: 2, md: 3 },
+            height: '100%', 
+            minHeight: { xs: '300px', md: '400px' },
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
           <DistributionPieChart
             priorityDistribution={priorityDistribution}
             tagDistribution={tagDistribution}
             loading={loading}
             error={error ? error : null}
           />
-        </Box>
-        
-        <Box sx={{ width: '100%' }}>
-          <ActivityHeatmapChart
-            data={data}
-            period={period}
-            currentDate={currentDate}
-            loading={loading}
-            error={error ? error : null}
-          />
-        </Box>
+        </Paper>
       </Box>
+      
+      {/* アクティビティヒートマップ - 常に横幅いっぱい */}
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          p: { xs: 2, md: 3 },
+          minHeight: { xs: '250px', md: '300px' },
+          mt: 3
+        }}
+      >
+        <ActivityHeatmapChart
+          data={data}
+          period={period}
+          currentDate={currentDate}
+          loading={loading}
+          error={error ? error : null}
+          compact={isMobile} // モバイル表示では省スペースモード
+        />
+      </Paper>
     </Container>
   );
 } 

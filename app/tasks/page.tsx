@@ -1,13 +1,27 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Grid, Container, Button, Box, useMediaQuery, Theme } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { 
+  Grid, 
+  Container, 
+  Button, 
+  Box, 
+  useMediaQuery, 
+  Theme, 
+  IconButton,
+  Tooltip,
+  Fab
+} from '@mui/material';
+import { 
+  Add as AddIcon,
+  FilterAlt as FilterIcon 
+} from '@mui/icons-material';
 import TaskListSidebar from '../components/tasks/TaskListSidebar';
 import TaskDataGrid from '../components/tasks/TaskDataGrid';
 import TaskFilterBar from '../components/tasks/TaskFilterBar';
 import TaskModal from '../components/tasks/TaskModal';
 import CustomDataManager from '../components/custom/CustomDataManager';
+import FilterDrawer from '../components/tasks/FilterDrawer';
 import { useTaskStore } from '../store/taskStore';
 
 /**
@@ -19,11 +33,18 @@ export default function TasksPage() {
   
   // 画面サイズに応じたレイアウト調整
   const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
+  const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   
   // サイドバーの表示/非表示切り替え
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+  
+  // フィルタードロワーの表示/非表示切り替え
+  const toggleFilterDrawer = () => {
+    setFilterDrawerOpen(!filterDrawerOpen);
   };
 
   return (
@@ -36,6 +57,7 @@ export default function TasksPage() {
           padding: { xs: '8px', md: '16px' },
           boxSizing: 'border-box',
           overflow: 'hidden',
+          position: 'relative',
         }}
       >
         {/* モバイル表示のサイドバートグルボタン */}
@@ -74,33 +96,61 @@ export default function TasksPage() {
         )}
 
         {/* メインコンテンツ */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {/* フィルターバー */}
-          <TaskFilterBar />
-
-          {/* ツールバー */}
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={() => openTaskModal('create')}
-              size={isMobile ? 'small' : 'medium'}
-              aria-label="新しいタスクを追加"
-            >
-              タスクを追加
-            </Button>
-          </Box>
-
+        <Box sx={{ 
+          flexGrow: 1, 
+          height: { xs: 'auto', md: '100%' },
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          {/* フィルターバー - モバイルではドロワーを使用 */}
+          {!isSmall && <TaskFilterBar />}
+          
           {/* タスク一覧 */}
-          <Box sx={{ flex: 1, overflow: 'hidden' }}>
-            <TaskDataGrid />
-          </Box>
+          <TaskDataGrid />
+          
+          {/* モバイル表示のフィルターボタン */}
+          {isSmall && (
+            <Fab 
+              color="primary" 
+              aria-label="フィルターを開く"
+              onClick={toggleFilterDrawer}
+              sx={{ 
+                position: 'fixed',
+                bottom: 80,
+                right: 16,
+                zIndex: 1000,
+              }}
+            >
+              <FilterIcon />
+            </Fab>
+          )}
+          
+          {/* 新規タスク作成ボタン */}
+          <Fab 
+            color="primary" 
+            aria-label="タスクを追加"
+            onClick={() => openTaskModal('create')}
+            sx={{ 
+              position: 'fixed',
+              bottom: 16,
+              right: 16,
+              zIndex: 1000,
+            }}
+          >
+            <AddIcon />
+          </Fab>
         </Box>
       </Box>
-
-      {/* タスク詳細・編集モーダル */}
+      
+      {/* タスク作成・編集モーダル */}
       <TaskModal />
+      
+      {/* モバイル用フィルタードロワー */}
+      <FilterDrawer 
+        open={filterDrawerOpen} 
+        onClose={() => setFilterDrawerOpen(false)} 
+      />
     </Container>
   );
 } 

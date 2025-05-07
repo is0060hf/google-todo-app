@@ -20,6 +20,7 @@ interface ActivityHeatmapChartProps {
   currentDate: Date;
   loading?: boolean;
   error?: string | null;
+  compact?: boolean; // モバイル向け省スペースモード
 }
 
 // ヒートマップのセルスタイル
@@ -44,6 +45,8 @@ const HeatmapCell = styled(Box)<{ intensity: number }>(({ theme, intensity }) =>
 
 // 曜日ラベル
 const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
+// 曜日ラベル（省略形）
+const WEEKDAYS_SHORT = ['月', '火', '水', '木', '金', '土', '日'];
 
 /**
  * タスクのアクティビティをヒートマップで表示するコンポーネント
@@ -55,6 +58,7 @@ export function ActivityHeatmapChart({
   currentDate,
   loading = false,
   error = null,
+  compact = false, // デフォルトは通常モード
 }: ActivityHeatmapChartProps) {
   // 月のカレンダーデータを生成
   const calendarData = useMemo(() => {
@@ -113,45 +117,48 @@ export function ActivityHeatmapChart({
     return Math.min(count / maxCount, 1);
   };
   
+  // 使用する曜日ラベル
+  const weekdayLabels = compact ? WEEKDAYS_SHORT : WEEKDAYS;
+  
   // ローディング表示
   if (loading) {
     return (
-      <Paper sx={{ p: 2 }}>
+      <Box>
         <Typography variant="h6" gutterBottom>アクティビティ</Typography>
-        <Skeleton variant="rectangular" height={300} />
-      </Paper>
+        <Skeleton variant="rectangular" height={compact ? 200 : 300} />
+      </Box>
     );
   }
   
   // エラー表示
   if (error) {
     return (
-      <Paper sx={{ p: 2 }}>
+      <Box>
         <Typography variant="h6" gutterBottom>アクティビティ</Typography>
         <Typography color="error">{error}</Typography>
-      </Paper>
+      </Box>
     );
   }
   
   // 月次以外は表示しない
   if (period !== 'monthly') {
     return (
-      <Paper sx={{ p: 2 }}>
+      <Box>
         <Typography variant="h6" gutterBottom>アクティビティ</Typography>
-        <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+        <Box sx={{ height: compact ? 200 : 300, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
           <Typography>月次表示でのみ利用可能です</Typography>
           <Typography variant="caption" color="text.secondary">
             月次を選択して表示してください
           </Typography>
         </Box>
-      </Paper>
+      </Box>
     );
   }
   
   return (
-    <Paper sx={{ p: 2 }}>
+    <Box>
       <Typography variant="h6" gutterBottom>アクティビティ</Typography>
-      <Box sx={{ p: 1, mt: 1 }}>
+      <Box sx={{ p: compact ? 0 : 1, mt: 1 }}>
         <Typography variant="subtitle1" align="center" gutterBottom>
           {format(currentDate, 'yyyy年M月', { locale: ja })}
         </Typography>
@@ -160,7 +167,7 @@ export function ActivityHeatmapChart({
         <Box sx={{ mb: 2, mt: 1 }}>
           {/* 曜日のヘッダー */}
           <Box sx={{ display: 'flex', mb: 0.5 }}>
-            {WEEKDAYS.map((day, i) => (
+            {weekdayLabels.map((day, i) => (
               <Box 
                 key={`header-${i}`}
                 sx={{ 
@@ -168,7 +175,7 @@ export function ActivityHeatmapChart({
                   textAlign: 'center',
                   color: i >= 5 ? 'text.secondary' : 'text.primary',
                   fontWeight: 'medium',
-                  fontSize: '0.75rem'
+                  fontSize: compact ? '0.65rem' : '0.75rem'
                 }}
               >
                 {day}
@@ -178,7 +185,7 @@ export function ActivityHeatmapChart({
           
           {/* カレンダーの週 */}
           {calendarData.map((week, weekIndex) => (
-            <Box key={`week-${weekIndex}`} sx={{ display: 'flex', mb: 0.5 }}>
+            <Box key={`week-${weekIndex}`} sx={{ display: 'flex', mb: compact ? 0.3 : 0.5 }}>
               {week.map((day, dayIndex) => {
                 const dayData = getDayData(day);
                 const isCurrentMonth = isSameMonth(day, currentDate);
@@ -193,7 +200,7 @@ export function ActivityHeatmapChart({
                       aspectRatio: '1/1',
                       position: 'relative',
                       opacity: isCurrentMonth ? 1 : 0.5,
-                      mx: 0.2
+                      mx: compact ? 0.1 : 0.2
                     }}
                   >
                     <Tooltip
@@ -225,6 +232,7 @@ export function ActivityHeatmapChart({
                             transform: 'translate(-50%, -50%)',
                             color: intensity > 0.5 ? 'white' : 'text.primary',
                             fontWeight: 'medium',
+                            fontSize: compact ? '0.65rem' : '0.75rem'
                           }}
                         >
                           {getDate(day)}
@@ -239,19 +247,19 @@ export function ActivityHeatmapChart({
         </Box>
         
         {/* 凡例 */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: compact ? 1 : 2 }}>
           <Typography variant="caption" sx={{ mr: 1 }}>少</Typography>
           {[0, 0.2, 0.4, 0.6, 0.8, 1].map((intensity, i) => (
             <HeatmapCell 
               key={`legend-${i}`} 
               intensity={intensity}
-              sx={{ width: 16, height: 16, mr: 0.5 }}
+              sx={{ width: compact ? 12 : 16, height: compact ? 12 : 16, mr: 0.5 }}
             />
           ))}
           <Typography variant="caption" sx={{ ml: 1 }}>多</Typography>
         </Box>
       </Box>
-    </Paper>
+    </Box>
   );
 }
 

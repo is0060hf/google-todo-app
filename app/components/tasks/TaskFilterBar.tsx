@@ -35,12 +35,16 @@ interface TagResponse {
   name: string;
 }
 
+interface TaskFilterBarProps {
+  drawerMode?: boolean;
+}
+
 /**
  * タスクのフィルタリングコンポーネント
  * 優先度、タグ、ステータス、期限でフィルタリングが可能
  */
-export function TaskFilterBar() {
-  const [isOpen, setIsOpen] = useState(false);
+export function TaskFilterBar({ drawerMode = false }: TaskFilterBarProps) {
+  const [isOpen, setIsOpen] = useState(drawerMode);
   
   // タスクストアからフィルターと設定関数を取得
   const { 
@@ -102,88 +106,101 @@ export function TaskFilterBar() {
     setIsOpen(!isOpen);
   };
   
-  return (
-    <Paper sx={{ p: 2, mb: 2 }} role="region" aria-label="タスクフィルター">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">
-          フィルター
-          <Tooltip title={isOpen ? 'フィルターを閉じる' : 'フィルターを開く'}>
-            <IconButton 
-              onClick={toggleFilterPanel} 
-              size="small"
-              aria-expanded={isOpen}
-              aria-label={isOpen ? 'フィルターを閉じる' : 'フィルターを開く'}
-            >
-              <FilterIcon />
-            </IconButton>
-          </Tooltip>
-        </Typography>
-        
-        {/* アクティブなフィルターの表示 */}
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          {priorityFilter.length > 0 && (
-            <Chip 
-              label={`優先度: ${priorityFilter.length}個選択`} 
-              onDelete={() => setPriorityFilter([])}
-              color="primary"
-              variant="outlined"
-              size="small"
-              aria-label={`優先度フィルター: ${priorityFilter.length}個選択中、クリックで解除`}
-            />
-          )}
+  // フィルターコンテンツ
+  const filterContent = (
+    <>
+      {/* ドロワーモードでない場合はフィルターの概要と切り替えボタンを表示 */}
+      {!drawerMode && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">
+            フィルター
+            <Tooltip title={isOpen ? 'フィルターを閉じる' : 'フィルターを開く'}>
+              <IconButton 
+                onClick={toggleFilterPanel} 
+                size="small"
+                aria-expanded={isOpen}
+                aria-label={isOpen ? 'フィルターを閉じる' : 'フィルターを開く'}
+              >
+                <FilterIcon />
+              </IconButton>
+            </Tooltip>
+          </Typography>
           
-          {tagFilter.length > 0 && (
-            <Chip 
-              label={`タグ: ${tagFilter.length}個選択`} 
-              onDelete={() => setTagFilter([])}
-              color="primary"
-              variant="outlined"
-              size="small"
-              aria-label={`タグフィルター: ${tagFilter.length}個選択中、クリックで解除`}
-            />
-          )}
-          
-          {statusFilter !== 'all' && (
-            <Chip 
-              label={`状態: ${statusFilter === 'active' ? '未完了' : '完了'}`}
-              onDelete={() => setStatusFilter('all')}
-              color="primary"
-              variant="outlined"
-              size="small"
-              aria-label={`状態フィルター: ${statusFilter === 'active' ? '未完了' : '完了'}、クリックで解除`}
-            />
-          )}
-          
-          {dueDateFilter !== 'all' && (
-            <Chip 
-              label={`期限: ${getDueDateLabel(dueDateFilter)}`}
-              onDelete={() => setDueDateFilter('all')}
-              color="primary"
-              variant="outlined"
-              size="small"
-              aria-label={`期限フィルター: ${getDueDateLabel(dueDateFilter)}、クリックで解除`}
-            />
-          )}
-          
-          {(priorityFilter.length > 0 || 
-            tagFilter.length > 0 || 
-            statusFilter !== 'all' || 
-            dueDateFilter !== 'all') && (
-            <Button 
-              size="small" 
-              startIcon={<ClearIcon />}
-              onClick={resetFilters}
-              aria-label="すべてのフィルターをリセット"
-            >
-              リセット
-            </Button>
-          )}
+          {/* アクティブなフィルターの表示 */}
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {priorityFilter.length > 0 && (
+              <Chip 
+                label={`優先度: ${priorityFilter.length}個選択`} 
+                onDelete={() => setPriorityFilter([])}
+                color="primary"
+                variant="outlined"
+                size="small"
+                aria-label={`優先度フィルター: ${priorityFilter.length}個選択中、クリックで解除`}
+              />
+            )}
+            
+            {tagFilter.length > 0 && (
+              <Chip 
+                label={`タグ: ${tagFilter.length}個選択`} 
+                onDelete={() => setTagFilter([])}
+                color="primary"
+                variant="outlined"
+                size="small"
+                aria-label={`タグフィルター: ${tagFilter.length}個選択中、クリックで解除`}
+              />
+            )}
+            
+            {statusFilter !== 'all' && (
+              <Chip 
+                label={`状態: ${statusFilter === 'active' ? '未完了' : '完了'}`}
+                onDelete={() => setStatusFilter('all')}
+                color="primary"
+                variant="outlined"
+                size="small"
+                aria-label={`状態フィルター: ${statusFilter === 'active' ? '未完了' : '完了'}、クリックで解除`}
+              />
+            )}
+            
+            {dueDateFilter !== 'all' && (
+              <Chip 
+                label={`期限: ${getDueDateLabel(dueDateFilter)}`}
+                onDelete={() => setDueDateFilter('all')}
+                color="primary"
+                variant="outlined"
+                size="small"
+                aria-label={`期限フィルター: ${getDueDateLabel(dueDateFilter)}、クリックで解除`}
+              />
+            )}
+            
+            {(priorityFilter.length > 0 || 
+              tagFilter.length > 0 || 
+              statusFilter !== 'all' || 
+              dueDateFilter !== 'all') && (
+              <Button 
+                size="small" 
+                startIcon={<ClearIcon />}
+                onClick={resetFilters}
+                aria-label="すべてのフィルターをリセット"
+              >
+                リセット
+              </Button>
+            )}
+          </Box>
         </Box>
-      </Box>
+      )}
       
       {/* フィルターパネル */}
-      {isOpen && (
-        <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+      {(isOpen || drawerMode) && (
+        <Box sx={{ 
+          mt: drawerMode ? 0 : 2, 
+          display: 'grid', 
+          gridTemplateColumns: { 
+            xs: '1fr', 
+            sm: drawerMode ? '1fr' : '1fr 1fr', 
+            md: drawerMode ? '1fr' : '1fr 1fr 1fr 1fr' 
+          }, 
+          gap: 2 
+        }}>
           {/* 優先度フィルター */}
           <FormControl size="small" fullWidth>
             <InputLabel id="priority-filter-label">優先度</InputLabel>
@@ -284,6 +301,18 @@ export function TaskFilterBar() {
           </FormControl>
         </Box>
       )}
+    </>
+  );
+  
+  // ドロワーモードの場合はラップしないでフィルターコンテンツのみを返す
+  if (drawerMode) {
+    return filterContent;
+  }
+  
+  // 通常モードではPaperでラップして返す
+  return (
+    <Paper sx={{ p: 2, mb: 2 }} role="region" aria-label="タスクフィルター">
+      {filterContent}
     </Paper>
   );
 }
