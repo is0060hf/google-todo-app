@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { 
   FormControl, 
   InputLabel, 
-  Select, 
+  Select as MuiSelect, 
   MenuItem, 
   SelectChangeEvent,
   FormHelperText,
@@ -18,7 +18,7 @@ import {
 import { useTaskStore, Priority } from '../../store/taskStore';
 import { useApiGet } from '../../lib/api-hooks';
 
-interface PrioritySelectorProps {
+export interface PrioritySelectorProps {
   value: number | null;
   onChange: (value: number | null) => void;
   disabled?: boolean;
@@ -99,13 +99,15 @@ export function PrioritySelector({
   return (
     <FormControl fullWidth error={error} disabled={disabled || isLoading}>
       <InputLabel id="priority-select-label">優先度</InputLabel>
-      <Select
+      <MuiSelect
         labelId="priority-select-label"
         id="priority-select"
         value={value?.toString() || ''}
         onChange={handleChange}
         label="優先度"
         renderValue={(value) => renderPriorityValue(value === '' ? null : Number(value))}
+        aria-label="優先度選択"
+        aria-describedby="priority-helper-text"
       >
         <MenuItem value="">
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -126,13 +128,16 @@ export function PrioritySelector({
                       ? 'warning.main'
                       : 'success.main'
                 }}
+                aria-hidden="true"
               />
               {priority.name}
             </Box>
           </MenuItem>
         ))}
-      </Select>
-      {helperText && <FormHelperText>{helperText}</FormHelperText>}
+      </MuiSelect>
+      {helperText && (
+        <FormHelperText id="priority-helper-text">{helperText}</FormHelperText>
+      )}
     </FormControl>
   );
 }

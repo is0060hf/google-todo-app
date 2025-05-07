@@ -395,13 +395,43 @@
 - [ ] WCAG 2.1 AAレベル準拠の完全確認
   - [ ] コントラスト比の確認（テキストと背景の比率が4.5:1以上）
   - [ ] キーボード操作の完全対応確認（全機能がキーボードのみで操作可能か）
-  - [ ] スクリーンリーダー対応の確認（ARIA属性の適切な使用）
-    - [ ] DataGridコンポーネントのaria-label属性追加
-    - [ ] モーダルダイアログのaria-labelledby、aria-describedby属性追加
-    - [ ] ステータス変更時のaria-live領域の追加
+  - [x] スクリーンリーダー対応の確認（ARIA属性の適切な使用）
+    - [x] DataGridコンポーネントのaria-label属性追加
+    - [x] モーダルダイアログのaria-labelledby、aria-describedby属性追加
+    - [x] ステータス変更時のaria-live領域の追加
   - [ ] フォーカス順序の論理的設定
   - [ ] エラー状態の明確な通知
   - [ ] 拡大表示（200%まで）での表示確認
+- [x] コンポーネント別アクセシビリティ対応
+  - [x] Modal.tsx
+    - [x] ダイアログにaria-labelledby、aria-describedby属性追加
+    - [x] タイトルと説明部分にID属性追加
+    - [x] 閉じるボタンにaria-label属性追加
+  - [x] TagSelector.tsx
+    - [x] Autocompleteにaria-required属性追加
+    - [x] アイコンボタンにaria-label属性追加
+    - [x] リスト表示形式の改善（ListItem使用）
+    - [x] ダイアログにアクセシビリティ属性追加
+  - [x] TaskDataGrid.tsx
+    - [x] DataGridコンポーネントにaria-label属性追加
+    - [x] 状態変更チェックボックスにaria-label属性追加
+    - [x] アクション用アイコンボタンにaria-label属性追加
+    - [x] 日本語localeTextの設定追加
+  - [x] PrioritySelector.tsx
+    - [x] Selectコンポーネントにaria属性追加
+    - [x] 装飾アイコンにaria-hidden="true"設定
+    - [x] ヘルパーテキスト参照用ID追加
+  - [x] TaskModal.tsx
+    - [x] フォーム要素にaria-required、aria-label属性追加
+    - [x] 日付選択コンポーネントのアクセシビリティ対応
+    - [x] サブタスク一覧にaria-label属性追加
+    - [x] モーダル説明テキスト追加
+- [ ] 今後の対応課題
+  - [ ] Alert/Snackbarコンポーネントにaria-live属性追加
+  - [ ] キーボードナビゲーションの最適化
+  - [ ] カラーコントラスト解析ツールによる検証
+  - [ ] スクリーンリーダーによる動作確認テスト
+  - [ ] アクセシビリティテストのCI/CD組み込み
 
 ### データグリッド機能強化
 - [ ] タスク一覧画面のフィルタリング機能完全実装

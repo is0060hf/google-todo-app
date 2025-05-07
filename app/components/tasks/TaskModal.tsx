@@ -298,6 +298,7 @@ export function TaskModal() {
       confirmDisabled={!formData.title.trim()}
       confirmLoading={createTaskMutation.isPending || updateTaskMutation.isPending}
       maxWidth="md"
+      description={modalMode === 'create' ? 'タスクを作成して追加します' : modalMode === 'edit' ? 'タスクの詳細を編集します' : ''}
     >
       <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
         <Box sx={{ p: 1 }}>
@@ -311,6 +312,8 @@ export function TaskModal() {
                 value={formData.title}
                 onChange={(e) => handleChange('title', e.target.value)}
                 disabled={modalMode === 'view'}
+                aria-required="true"
+                aria-label="タスクのタイトル"
               />
             </Grid>
 
@@ -324,6 +327,7 @@ export function TaskModal() {
                 value={formData.notes}
                 onChange={(e) => handleChange('notes', e.target.value)}
                 disabled={modalMode === 'view'}
+                aria-label="タスクのメモ"
               />
             </Grid>
 
@@ -334,7 +338,14 @@ export function TaskModal() {
                 value={formData.due}
                 onChange={(date) => handleChange('due', date)}
                 disabled={modalMode === 'view'}
-                slotProps={{ textField: { fullWidth: true } }}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    inputProps: {
+                      'aria-label': '期限日',
+                    }
+                  } 
+                }}
               />
             </Grid>
 
@@ -350,12 +361,15 @@ export function TaskModal() {
             {/* 親タスク選択 */}
             <Grid item xs={12}>
               <FormControl fullWidth>
-                <InputLabel>親タスク</InputLabel>
+                <InputLabel id="parent-task-label">親タスク</InputLabel>
                 <MuiSelect
+                  labelId="parent-task-label"
+                  id="parent-task-select"
                   value={formData.parent || ''}
                   onChange={(e) => handleChange('parent', e.target.value === '' ? null : e.target.value)}
                   disabled={modalMode === 'view'}
                   label="親タスク"
+                  aria-label="親タスクを選択"
                 >
                   <MenuItem value="">なし (最上位タスク)</MenuItem>
                   {selectableParents.map((task) => (
@@ -384,6 +398,7 @@ export function TaskModal() {
                     checked={formData.status === 'completed'}
                     onChange={(e) => handleChange('status', e.target.checked ? 'completed' : 'needsAction')}
                     disabled={modalMode === 'view'}
+                    aria-label="タスク完了状態"
                   />
                 }
                 label="完了済み"
@@ -399,7 +414,7 @@ export function TaskModal() {
                   </Typography>
                   
                   {subTasks.length > 0 ? (
-                    <List>
+                    <List aria-label="サブタスク一覧">
                       {subTasks.map((subTask) => (
                         <ListItem
                           key={subTask.id}
@@ -411,6 +426,7 @@ export function TaskModal() {
                                     edge="end"
                                     size="small"
                                     onClick={() => handleEditSubTask(subTask.id)}
+                                    aria-label={`サブタスク「${subTask.title}」を編集`}
                                   >
                                     <EditIcon fontSize="small" />
                                   </IconButton>
@@ -422,6 +438,7 @@ export function TaskModal() {
                           <SubdirectoryIcon 
                             fontSize="small" 
                             sx={{ mr: 1, color: 'text.secondary' }} 
+                            aria-hidden="true"
                           />
                           <ListItemText
                             primary={subTask.title}
@@ -447,6 +464,7 @@ export function TaskModal() {
                         <IconButton 
                           color="primary"
                           onClick={handleAddSubTask}
+                          aria-label="サブタスクを追加"
                         >
                           <AddIcon />
                         </IconButton>

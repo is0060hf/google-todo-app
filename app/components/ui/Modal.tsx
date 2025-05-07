@@ -25,6 +25,7 @@ export interface ModalProps {
   cancelText?: string;
   confirmDisabled?: boolean;
   confirmLoading?: boolean;
+  description?: string;
 }
 
 /**
@@ -42,7 +43,12 @@ export function Modal({
   cancelText = 'キャンセル',
   confirmDisabled = false,
   confirmLoading = false,
+  description,
 }: ModalProps) {
+  // モーダルのIDを作成（タイトルとコンテンツのラベル用）
+  const titleId = `modal-title-${React.useId()}`;
+  const contentId = `modal-content-${React.useId()}`;
+
   // デフォルトのアクションボタン（確定とキャンセル）
   const defaultActions = (
     <>
@@ -67,8 +73,10 @@ export function Modal({
       onClose={onClose}
       maxWidth={maxWidth}
       fullWidth
+      aria-labelledby={titleId}
+      aria-describedby={contentId}
     >
-      <DialogTitle>
+      <DialogTitle id={titleId}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">{title}</Typography>
           <IconButton
@@ -80,7 +88,12 @@ export function Modal({
           </IconButton>
         </Box>
       </DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers id={contentId}>
+        {description && (
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            {description}
+          </Typography>
+        )}
         {children}
       </DialogContent>
       {(actions || confirmText) && (

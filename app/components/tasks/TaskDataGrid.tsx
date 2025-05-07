@@ -269,6 +269,7 @@ export function TaskDataGrid() {
         <Checkbox
           checked={params.row.status === 'completed'}
           onChange={() => toggleTaskStatus(params.row.id, params.row.status)}
+          aria-label={params.row.status === 'completed' ? 'タスクを未完了に戻す' : 'タスクを完了にする'}
         />
       ),
       sortable: true,
@@ -377,6 +378,7 @@ export function TaskDataGrid() {
             <IconButton 
               size="small" 
               onClick={() => moveTaskUp(params.row.id)}
+              aria-label={`タスク「${params.row.title}」を上へ移動`}
             >
               <ArrowUpIcon fontSize="small" />
             </IconButton>
@@ -385,6 +387,7 @@ export function TaskDataGrid() {
             <IconButton 
               size="small" 
               onClick={() => moveTaskDown(params.row.id)}
+              aria-label={`タスク「${params.row.title}」を下へ移動`}
             >
               <ArrowDownIcon fontSize="small" />
             </IconButton>
@@ -403,6 +406,7 @@ export function TaskDataGrid() {
             <IconButton 
               size="small" 
               onClick={() => handleEditTask(params.row.id)}
+              aria-label={`タスク「${params.row.title}」を編集`}
             >
               <EditIcon fontSize="small" />
             </IconButton>
@@ -411,6 +415,7 @@ export function TaskDataGrid() {
             <IconButton 
               size="small" 
               onClick={() => openDeleteDialog(params.row.id)}
+              aria-label={`タスク「${params.row.title}」を削除`}
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -458,9 +463,23 @@ export function TaskDataGrid() {
           slotProps={{
             toolbar: {
               showQuickFilter: true,
+              quickFilterProps: { 
+                debounceMs: 500,
+              },
             },
           }}
           getRowId={(row) => row.id}
+          aria-label="タスク一覧"
+          localeText={{
+            noRowsLabel: 'タスクはありません',
+            footerRowSelected: (count) => `${count}件のタスクを選択中`,
+            columnMenuSortAsc: '昇順に並べ替え',
+            columnMenuSortDesc: '降順に並べ替え',
+            columnMenuUnsort: '並べ替えをクリア',
+            columnMenuFilter: 'フィルター',
+            columnMenuHideColumn: '列を非表示',
+            columnMenuShowColumns: '列の表示を管理',
+          }}
         />
       </Box>
 

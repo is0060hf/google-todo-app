@@ -14,6 +14,10 @@ import {
   DialogActions,
   Typography,
   CircularProgress,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   Label as LabelIcon,
@@ -179,6 +183,7 @@ export function TagSelector({
               placeholder={tags.length > 0 ? "タグを選択" : "タグがありません"}
               error={error}
               helperText={helperText}
+              aria-required={false}
               InputProps={{
                 ...params.InputProps,
                 endAdornment: (
@@ -189,6 +194,7 @@ export function TagSelector({
                         onClick={toggleManagementMode}
                         size="small"
                         sx={{ mr: 1 }}
+                        aria-label={managementMode ? "選択モードに戻る" : "タグ管理"}
                       >
                         {managementMode ? <LabelIcon /> : <EditIcon />}
                       </IconButton>
@@ -198,6 +204,7 @@ export function TagSelector({
                         onClick={() => handleOpenDialog('create')}
                         size="small"
                         sx={{ mr: 1 }}
+                        aria-label="新しいタグを作成"
                       >
                         <AddIcon />
                       </IconButton>
@@ -222,29 +229,51 @@ export function TagSelector({
         
         {/* 管理モード時のタグ一覧 */}
         {managementMode && (
-          <Box sx={{ mt: 2, border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              タグ管理
-            </Typography>
+          <List>
+            {tags.map(tag => (
+              <ListItem
+                key={tag.id}
+                secondaryAction={
+                  <Box>
+                    <Tooltip title="タグを編集">
+                      <IconButton 
+                        edge="end" 
+                        onClick={() => handleOpenDialog('edit', tag)}
+                        aria-label={`タグ「${tag.name}」を編集`}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="タグを削除">
+                      <IconButton 
+                        edge="end" 
+                        onClick={() => handleDeleteTag(tag)}
+                        aria-label={`タグ「${tag.name}」を削除`}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                }
+              >
+                <ListItemIcon>
+                  <LabelIcon />
+                </ListItemIcon>
+                <ListItemText 
+                  primary={tag.name} 
+                />
+              </ListItem>
+            ))}
             
-            {tags.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                タグがありません
-              </Typography>
-            ) : (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {tags.map(tag => (
-                  <Chip
-                    key={tag.id}
-                    icon={<LabelIcon />}
-                    label={tag.name}
-                    onDelete={() => handleDeleteTag(tag)}
-                    onClick={() => handleOpenDialog('edit', tag)}
-                  />
-                ))}
-              </Box>
+            {tags.length === 0 && (
+              <ListItem>
+                <ListItemText 
+                  primary="タグがありません" 
+                  secondary="新しいタグを作成してください" 
+                />
+              </ListItem>
             )}
-          </Box>
+          </List>
         )}
       </Box>
 
@@ -254,11 +283,13 @@ export function TagSelector({
         onClose={handleCloseDialog}
         maxWidth="xs"
         fullWidth
+        aria-labelledby="tag-dialog-title"
+        aria-describedby="tag-dialog-content"
       >
-        <DialogTitle>
+        <DialogTitle id="tag-dialog-title">
           {dialogMode === 'create' ? 'タグを作成' : 'タグを編集'}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent id="tag-dialog-content">
           <TextField
             autoFocus
             margin="dense"
@@ -267,6 +298,8 @@ export function TagSelector({
             value={tagFormData.name}
             onChange={(e) => setTagFormData({ ...tagFormData, name: e.target.value })}
             variant="outlined"
+            aria-required="true"
+            required
           />
         </DialogContent>
         <DialogActions>
