@@ -21,6 +21,8 @@ import {
   IconButton,
   Tooltip,
   Divider,
+  FormHelperText,
+  Alert,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -29,7 +31,8 @@ import {
   SubdirectoryArrowRight as SubdirectoryIcon,
   Add as AddIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Error as ErrorIcon,
 } from '@mui/icons-material';
 import ja from 'date-fns/locale/ja';
 import { Modal } from '../../components/ui/Modal';
@@ -46,6 +49,12 @@ interface TaskFormData {
   priorityId: number | null;
   tags: string[];
   parent: string | null;
+}
+
+interface FormErrors {
+  title?: string;
+  notes?: string;
+  due?: string;
 }
 
 // タスクの深さの最大値（サブタスクのネスト制限）
@@ -79,6 +88,11 @@ export function TaskModal() {
     parent: null,
   });
 
+  // フォームエラーの状態
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
   // サブタスクの状態
   const [subTasks, setSubTasks] = useState<Task[]>([]);
 
@@ -102,6 +116,10 @@ export function TaskModal() {
       onSuccess: () => {
         refetchTasks();
         closeTaskModal();
+        setApiError(null);
+      },
+      onError: (error) => {
+        setApiError('タスクの作成に失敗しました。もう一度お試しください。');
       }
     }
   );
@@ -112,6 +130,10 @@ export function TaskModal() {
       onSuccess: () => {
         refetchTasks();
         closeTaskModal();
+        setApiError(null);
+      },
+      onError: (error) => {
+        setApiError('タスクの更新に失敗しました。もう一度お試しください。');
       }
     }
   );
@@ -121,6 +143,10 @@ export function TaskModal() {
     {
       onSuccess: () => {
         refetchCustomData();
+        setApiError(null);
+      },
+      onError: (error) => {
+        setApiError('タスクのカスタムデータの更新に失敗しました。');
       }
     }
   );
@@ -138,6 +164,11 @@ export function TaskModal() {
 
   // タスクが選択されたとき、そのデータをフォームに設定
   useEffect(() => {
+    // モーダルを開くときにエラー状態をリセット
+    setFormErrors({});
+    setApiError(null);
+    setIsSubmitting(false);
+    
     if (selectedTaskId && modalMode !== 'create') {
       const task = getTaskById(selectedTaskId);
       if (task) {
@@ -163,7 +194,7 @@ export function TaskModal() {
         parent: null,
       });
     }
-  }, [selectedTaskId, modalMode, getTaskById]);
+  }, [selectedTaskId, modalMode, getTaskById, isTaskModalOpen]);
 
   // カスタムデータが取得されたときの処理
   useEffect(() => {
@@ -171,14 +202,53 @@ export function TaskModal() {
       setFormData(prevState => ({
         ...prevState,
         priorityId: taskCustomData.customData.priorityId || null,
-        tags: taskCustomData.customData.tags || [],
+        tags: taskCustomData.customData.tags?.map((tag: any) => tag.id) || [],
       }));
     }
   }, [taskCustomData]);
 
+  // バリデーション関数
+  const validateForm = () => {
+    const errors: FormErrors = {};
+    let isValid = true;
+    
+    if (!formData.title.trim()) {
+      errors.title = 'タイトルは必須です';
+      isValid = false;
+    } else if (formData.title.trim().length > 200) {
+      errors.title = 'タイトルは200文字以内で入力してください';
+      isValid = false;
+    }
+    
+    if (formData.notes.length > 5000) {
+      errors.notes = 'メモは5000文字以内で入力してください';
+      isValid = false;
+    }
+    
+    // 将来の日付かチェック（オプション）
+    if (formData.due && formData.due < new Date(new Date().setHours(0, 0, 0, 0))) {
+      errors.due = '過去の日付は設定できません';
+      // isValid = false; // これは警告として表示するだけで、保存は許可する
+    }
+    
+    setFormErrors(errors);
+    return isValid;
+  };
+
   // フォームの入力値変更ハンドラ
   const handleChange = (field: keyof TaskFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // 入力時にリアルタイムバリデーション（タイトルのみ）
+    if (field === 'title') {
+      if (!value.trim()) {
+        setFormErrors(prev => ({ ...prev, title: 'タイトルは必須です' }));
+      } else if (value.trim().length > 200) {
+        setFormErrors(prev => ({ ...prev, title: 'タイトルは200文字以内で入力してください' }));
+      } else {
+        setFormErrors(prev => ({ ...prev, title: undefined }));
+      }
+    }
   };
 
   // サブタスクの編集
@@ -244,7 +314,13 @@ export function TaskModal() {
 
   // タスクの保存処理
   const handleSaveTask = async () => {
-    if (!formData.title.trim()) return;
+    setIsSubmitting(true);
+    
+    // フォームのバリデーション
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
+    }
 
     const taskData = {
       title: formData.title.trim(),
@@ -265,7 +341,10 @@ export function TaskModal() {
         const result = await createTaskMutation.mutateAsync(taskData);
         if (result?.task?.id) {
           // 新規作成したタスクのカスタムデータを更新
-          await updateCustomDataMutation.mutateAsync(customData);
+          await updateCustomDataMutation.mutateAsync({
+            ...customData,
+            googleTaskId: result.task.id,
+          });
         }
       } else {
         // タスクの更新
@@ -273,8 +352,11 @@ export function TaskModal() {
         // カスタムデータの更新
         await updateCustomDataMutation.mutateAsync(customData);
       }
+      setIsSubmitting(false);
     } catch (error) {
       console.error('Failed to save task:', error);
+      setApiError('タスクの保存中にエラーが発生しました。もう一度お試しください。');
+      setIsSubmitting(false);
     }
   };
 
@@ -288,6 +370,9 @@ export function TaskModal() {
   // 選択可能な親タスク
   const selectableParents = getSelectableParentTasks();
 
+  // タイトルのエラー状態
+  const hasTitleError = !!formErrors.title;
+
   return (
     <Modal
       open={isTaskModalOpen}
@@ -295,13 +380,25 @@ export function TaskModal() {
       title={modalTitle}
       confirmText={modalMode !== 'view' ? '保存' : undefined}
       onConfirm={modalMode !== 'view' ? handleSaveTask : undefined}
-      confirmDisabled={!formData.title.trim()}
+      confirmDisabled={!formData.title.trim() || isSubmitting || Object.keys(formErrors).length > 0}
       confirmLoading={createTaskMutation.isPending || updateTaskMutation.isPending}
       maxWidth="md"
       description={modalMode === 'create' ? 'タスクを作成して追加します' : modalMode === 'edit' ? 'タスクの詳細を編集します' : ''}
     >
       <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
         <Box sx={{ p: 1 }}>
+          {/* APIエラー表示 */}
+          {apiError && (
+            <Alert 
+              severity="error" 
+              sx={{ mb: 2 }}
+              role="alert"
+              aria-live="assertive"
+            >
+              {apiError}
+            </Alert>
+          )}
+          
           <Grid container spacing={3}>
             {/* タイトル */}
             <Grid item xs={12}>
@@ -312,9 +409,26 @@ export function TaskModal() {
                 value={formData.title}
                 onChange={(e) => handleChange('title', e.target.value)}
                 disabled={modalMode === 'view'}
+                error={hasTitleError}
+                helperText={formErrors.title}
+                FormHelperTextProps={{
+                  role: hasTitleError ? 'alert' : undefined,
+                  'aria-live': hasTitleError ? 'assertive' : undefined,
+                }}
                 aria-required="true"
-                aria-label="タスクのタイトル"
+                aria-invalid={hasTitleError}
+                aria-describedby={hasTitleError ? 'title-error-text' : undefined}
+                inputProps={{
+                  'aria-label': 'タスクのタイトル',
+                  'aria-required': 'true',
+                  maxLength: 200,
+                }}
               />
+              {hasTitleError && (
+                <span id="title-error-text" className="visually-hidden">
+                  エラー: {formErrors.title}
+                </span>
+              )}
             </Grid>
 
             {/* メモ */}
@@ -327,8 +441,21 @@ export function TaskModal() {
                 value={formData.notes}
                 onChange={(e) => handleChange('notes', e.target.value)}
                 disabled={modalMode === 'view'}
+                error={!!formErrors.notes}
+                helperText={formErrors.notes}
                 aria-label="タスクのメモ"
+                aria-invalid={!!formErrors.notes}
+                aria-describedby={formErrors.notes ? 'notes-error-text' : undefined}
+                inputProps={{
+                  'aria-label': 'タスクのメモ',
+                  maxLength: 5000,
+                }}
               />
+              {formErrors.notes && (
+                <span id="notes-error-text" className="visually-hidden">
+                  エラー: {formErrors.notes}
+                </span>
+              )}
             </Grid>
 
             {/* 期限日 */}
@@ -341,12 +468,20 @@ export function TaskModal() {
                 slotProps={{ 
                   textField: { 
                     fullWidth: true,
+                    error: !!formErrors.due,
+                    helperText: formErrors.due,
                     inputProps: {
                       'aria-label': '期限日',
+                      'aria-invalid': !!formErrors.due,
                     }
                   } 
                 }}
               />
+              {formErrors.due && (
+                <span id="due-error-text" className="visually-hidden">
+                  警告: {formErrors.due}
+                </span>
+              )}
             </Grid>
 
             {/* 優先度 */}
@@ -378,6 +513,9 @@ export function TaskModal() {
                     </MenuItem>
                   ))}
                 </MuiSelect>
+                <FormHelperText>
+                  親タスクを設定すると、階層構造でタスクを管理できます。最大{MAX_TASK_DEPTH}階層までネストできます。
+                </FormHelperText>
               </FormControl>
             </Grid>
 

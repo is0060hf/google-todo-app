@@ -16,6 +16,26 @@ a {
   text-decoration: none;
 }
 
+/* スクリーンリーダー用のスタイル */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* キーボードフォーカスのアクセシビリティ強化 */
+:focus-visible {
+  outline: 3px solid #4285F4 !important; /* Google Blue */
+  outline-offset: 2px !important;
+  border-radius: 2px;
+}
+
 /* ダッシュボード・統計情報エリア用のスタイル */
 .stats-card {
   height: 100%;
@@ -38,15 +58,15 @@ a {
 
 /* タスク管理エリア用のスタイル */
 .task-priority-high {
-  border-left: 4px solid #f44336;
+  border-left: 4px solid #E53935;
 }
 
 .task-priority-medium {
-  border-left: 4px solid #ff9800;
+  border-left: 4px solid #FFC107;
 }
 
 .task-priority-low {
-  border-left: 4px solid #4caf50;
+  border-left: 4px solid #43A047;
 }
 
 /* レスポンシブ調整 */
@@ -54,4 +74,39 @@ a {
   .responsive-padding {
     padding: 12px !important;
   }
+  
+  /* モバイル用のタッチターゲットサイズ調整 */
+  button, 
+  .MuiIconButton-root, 
+  .MuiButtonBase-root {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+}
+
+/* 高コントラストモード対応 */
+@media (forced-colors: active) {
+  :root {
+    --high-contrast-border: 2px solid ButtonText;
+  }
+  
+  button, 
+  .MuiButtonBase-root {
+    border: var(--high-contrast-border);
+  }
+  
+  .MuiDataGrid-cell:focus-within {
+    outline: var(--high-contrast-border) !important;
+  }
+}
+
+/* 拡大表示(200%)テスト用 */
+.zoom-test-container {
+  transform: scale(2);
+  transform-origin: top left;
+  width: 50%;
+  height: 50%;
+  overflow: auto;
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
 } 

@@ -11,14 +11,49 @@ const inter = Inter({ subsets: ['latin'] });
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#4285F4', // Google Blueベース（仕様書に合わせて変更）
     },
     secondary: {
       main: '#f50057',
     },
+    // 優先度表示用のカスタムカラー
+    error: {
+      main: '#E53935', // 高優先度（仕様書に合わせて変更）
+    },
+    warning: {
+      main: '#FFC107', // 中優先度（仕様書に合わせて変更）
+    },
+    success: {
+      main: '#43A047', // 低優先度（仕様書に合わせて変更）
+    },
   },
   typography: {
     fontFamily: inter.style.fontFamily,
+  },
+  // アクセシビリティ向上のための設定
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          // フォーカス時の視覚的なインジケータを強化
+          '&:focus-visible': {
+            outline: '2px solid #4285F4',
+            outlineOffset: '2px',
+          },
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          // フォーカス時の視覚的なインジケータを強化
+          '& .MuiOutlinedInput-root:focus-visible': {
+            outline: '2px solid #4285F4',
+            outlineOffset: '2px',
+          },
+        },
+      },
+    },
   },
 });
 

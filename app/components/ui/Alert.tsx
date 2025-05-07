@@ -11,8 +11,16 @@ export interface AlertProps extends MuiAlertProps {
  * アラートコンポーネント
  */
 export function Alert({ message, severity = 'info', ...props }: AlertProps) {
+  // 重要度に応じたaria-liveの値を設定
+  const ariaLive = severity === 'error' || severity === 'warning' ? 'assertive' : 'polite';
+  
   return (
-    <MuiAlert severity={severity} {...props}>
+    <MuiAlert 
+      severity={severity} 
+      role="alert" 
+      aria-live={ariaLive}
+      {...props}
+    >
       {message}
     </MuiAlert>
   );
@@ -35,6 +43,9 @@ export function SnackbarAlert({
   autoHideDuration = 6000,
   ...props
 }: SnackbarAlertProps) {
+  // 重要度に応じたaria-liveの値を設定
+  const ariaLive = severity === 'error' || severity === 'warning' ? 'assertive' : 'polite';
+  
   return (
     <Snackbar
       open={open}
@@ -48,6 +59,8 @@ export function SnackbarAlert({
         variant="filled"
         severity={severity}
         onClose={onClose}
+        role="alert"
+        aria-live={ariaLive}
       >
         {message}
       </MuiAlert>

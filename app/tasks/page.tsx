@@ -5,7 +5,7 @@ import { Grid, Container, Button, Box, useMediaQuery, Theme } from '@mui/materia
 import { Add as AddIcon } from '@mui/icons-material';
 import TaskListSidebar from '../components/tasks/TaskListSidebar';
 import TaskDataGrid from '../components/tasks/TaskDataGrid';
-import TaskFilterBar, { FilterState } from '../components/tasks/TaskFilterBar';
+import TaskFilterBar from '../components/tasks/TaskFilterBar';
 import TaskModal from '../components/tasks/TaskModal';
 import CustomDataManager from '../components/custom/CustomDataManager';
 import { useTaskStore } from '../store/taskStore';
@@ -16,22 +16,10 @@ import { useTaskStore } from '../store/taskStore';
  */
 export default function TasksPage() {
   const { openTaskModal } = useTaskStore();
-  const [filters, setFilters] = useState<FilterState>({
-    priorityIds: [],
-    tagIds: [],
-    status: 'all',
-    dueDate: 'all'
-  });
   
   // 画面サイズに応じたレイアウト調整
   const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  
-  // フィルターの変更を処理
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
-    // ここでフィルターをデータグリッドに適用する処理を追加
-  };
   
   // サイドバーの表示/非表示切り替え
   const toggleSidebar = () => {
@@ -57,6 +45,8 @@ export default function TasksPage() {
             fullWidth 
             onClick={toggleSidebar} 
             sx={{ mb: 1 }}
+            aria-expanded={sidebarOpen}
+            aria-controls="task-list-sidebar"
           >
             {sidebarOpen ? 'リストを閉じる' : 'リストを表示'}
           </Button>
@@ -65,6 +55,7 @@ export default function TasksPage() {
         {/* サイドバー - モバイルでは条件付き表示 */}
         {(!isMobile || sidebarOpen) && (
           <Box 
+            id="task-list-sidebar"
             sx={{ 
               width: { xs: '100%', md: 280 }, 
               marginRight: { xs: 0, md: 2 },
@@ -85,7 +76,7 @@ export default function TasksPage() {
         {/* メインコンテンツ */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* フィルターバー */}
-          <TaskFilterBar onFilterChange={handleFilterChange} />
+          <TaskFilterBar />
 
           {/* ツールバー */}
           <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
@@ -95,6 +86,7 @@ export default function TasksPage() {
               startIcon={<AddIcon />}
               onClick={() => openTaskModal('create')}
               size={isMobile ? 'small' : 'medium'}
+              aria-label="新しいタスクを追加"
             >
               タスクを追加
             </Button>

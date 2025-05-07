@@ -66,6 +66,17 @@ interface TaskState {
   setSortBy: (sortBy: 'title' | 'dueDate' | 'priority' | 'status') => void;
   setSortDirection: (direction: 'asc' | 'desc') => void;
   
+  // 追加フィルター条件
+  priorityFilter: number[];
+  tagFilter: string[];
+  statusFilter: 'all' | 'active' | 'completed';
+  dueDateFilter: 'all' | 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'future';
+  setPriorityFilter: (priorityIds: number[]) => void;
+  setTagFilter: (tagIds: string[]) => void;
+  setStatusFilter: (status: 'all' | 'active' | 'completed') => void;
+  setDueDateFilter: (dueDate: 'all' | 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'future') => void;
+  resetFilters: () => void;
+  
   // モーダル状態
   isTaskModalOpen: boolean;
   modalMode: 'create' | 'edit' | 'view';
@@ -104,6 +115,23 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   setSortBy: (sortBy) => set({ sortBy }),
   setSortDirection: (direction) => set({ sortDirection: direction }),
   
+  // 追加フィルター条件
+  priorityFilter: [],
+  tagFilter: [],
+  statusFilter: 'all',
+  dueDateFilter: 'all',
+  setPriorityFilter: (priorityIds) => set({ priorityFilter: priorityIds }),
+  setTagFilter: (tagIds) => set({ tagFilter: tagIds }),
+  setStatusFilter: (status) => set({ statusFilter: status }),
+  setDueDateFilter: (dueDate) => set({ dueDateFilter: dueDate }),
+  resetFilters: () => set({ 
+    filter: '', 
+    priorityFilter: [], 
+    tagFilter: [], 
+    statusFilter: 'all', 
+    dueDateFilter: 'all' 
+  }),
+  
   // モーダル状態
   isTaskModalOpen: false,
   modalMode: 'view',
@@ -126,7 +154,18 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 // 表示用にフィルタリング・ソートされたタスクリストを取得するセレクタ
 export function useFilteredTasks() {
   return useTaskStore(state => {
-    const { tasks, filter, sortBy, sortDirection, selectedTaskListId } = state;
+    const { 
+      tasks, 
+      filter, 
+      sortBy, 
+      sortDirection, 
+      selectedTaskListId,
+      customData,
+      priorityFilter,
+      tagFilter,
+      statusFilter,
+      dueDateFilter
+    } = state;
     
     // 選択中のタスクリストのタスクのみ表示
     let filteredTasks = selectedTaskListId
@@ -137,8 +176,80 @@ export function useFilteredTasks() {
     if (filter) {
       const lowerFilter = filter.toLowerCase();
       filteredTasks = filteredTasks.filter(task => 
-        task.title.toLowerCase().includes(lowerFilter)
+        task.title.toLowerCase().includes(lowerFilter) || 
+        (task.notes && task.notes.toLowerCase().includes(lowerFilter))
       );
+    }
+    
+    // ステータスでフィルタリング
+    if (statusFilter !== 'all') {
+      filteredTasks = filteredTasks.filter(task => {
+        return statusFilter === 'active' 
+          ? task.status === 'needsAction' 
+          : task.status === 'completed';
+      });
+    }
+    
+    // 優先度でフィルタリング
+    if (priorityFilter.length > 0) {
+      filteredTasks = filteredTasks.filter(task => {
+        const taskCustomData = customData[task.id];
+        return taskCustomData && 
+               taskCustomData.priorityId !== undefined && 
+               priorityFilter.includes(taskCustomData.priorityId);
+      });
+    }
+    
+    // タグでフィルタリング
+    if (tagFilter.length > 0) {
+      filteredTasks = filteredTasks.filter(task => {
+        const taskCustomData = customData[task.id];
+        return taskCustomData && 
+               taskCustomData.tags && 
+               taskCustomData.tags.some(tagId => tagFilter.includes(tagId));
+      });
+    }
+    
+    // 期限でフィルタリング
+    if (dueDateFilter !== 'all') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const thisWeekEnd = new Date(today);
+      thisWeekEnd.setDate(thisWeekEnd.getDate() + (7 - thisWeekEnd.getDay()));
+      
+      const nextWeekStart = new Date(thisWeekEnd);
+      nextWeekStart.setDate(nextWeekStart.getDate() + 1);
+      
+      const nextWeekEnd = new Date(nextWeekStart);
+      nextWeekEnd.setDate(nextWeekEnd.getDate() + 6);
+      
+      filteredTasks = filteredTasks.filter(task => {
+        if (!task.due) return dueDateFilter === 'future'; // 期限なしはfutureとして扱う
+        
+        const dueDate = new Date(task.due);
+        dueDate.setHours(0, 0, 0, 0);
+        
+        switch (dueDateFilter) {
+          case 'overdue':
+            return dueDate < today;
+          case 'today':
+            return dueDate.getTime() === today.getTime();
+          case 'tomorrow':
+            return dueDate.getTime() === tomorrow.getTime();
+          case 'thisWeek':
+            return dueDate >= today && dueDate <= thisWeekEnd;
+          case 'nextWeek':
+            return dueDate >= nextWeekStart && dueDate <= nextWeekEnd;
+          case 'future':
+            return dueDate > thisWeekEnd;
+          default:
+            return true;
+        }
+      });
     }
     
     // ソート
@@ -155,6 +266,12 @@ export function useFilteredTasks() {
           else if (!a.due) comparison = 1;
           else if (!b.due) comparison = -1;
           else comparison = new Date(a.due).getTime() - new Date(b.due).getTime();
+          break;
+        case 'priority':
+          // 優先度でソート
+          const aPriority = customData[a.id]?.priorityId || 0;
+          const bPriority = customData[b.id]?.priorityId || 0;
+          comparison = bPriority - aPriority; // 高優先度（数字が大きい）が先
           break;
         case 'status':
           comparison = a.status === b.status ? 0 : (a.status === 'completed' ? 1 : -1);

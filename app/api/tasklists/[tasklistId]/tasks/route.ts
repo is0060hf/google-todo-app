@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/app/lib/prisma';
 import * as googleTasksApi from '@/app/lib/api/google-tasks';
+import * as optimizedApi from '@/app/lib/api/optimized-google-tasks';
 
 // タスク一覧取得API
 export async function GET(
@@ -30,17 +31,76 @@ export async function GET(
       );
     }
 
-    // Google Tasks APIからタスク一覧を取得
-    const tasks = await googleTasksApi.getTasks(tasklistId, accessToken);
+    // URLからクエリパラメータを取得
+    const url = new URL(request.url);
+    const showCompleted = url.searchParams.get('showCompleted') !== 'false';
+    const maxResults = url.searchParams.get('maxResults') 
+      ? parseInt(url.searchParams.get('maxResults') || '100', 10)
+      : 100;
+    const pageToken = url.searchParams.get('pageToken') || undefined;
+
+    // リクエストヘッダーからIf-None-Matchを取得
+    const ifNoneMatch = request.headers.get('If-None-Match');
+
+    // 最適化されたGoogle Tasks APIからタスク一覧を取得
+    const result = await optimizedApi.getTasksOptimized(
+      tasklistId, 
+      accessToken, 
+      ifNoneMatch || undefined,
+      showCompleted,
+      maxResults,
+      pageToken
+    );
     
-    return NextResponse.json({ tasks });
+    // 304 Not Modified の場合
+    if (result.notModified) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: {
+          'ETag': ifNoneMatch || '',
+        },
+      });
+    }
+    
+    // 正常レスポンス
+    const response = NextResponse.json({ 
+      tasks: result.data,
+      nextPageToken: result.nextPageToken 
+    });
+    
+    // ETagをレスポンスヘッダーに設定
+    if (result.etag) {
+      response.headers.set('ETag', result.etag);
+      response.headers.set('Cache-Control', 'private, max-age=0, must-revalidate');
+    }
+    
+    return response;
   } catch (error: any) {
     console.error('Error fetching tasks:', error);
     
+    // エラーメッセージの最適化
+    let errorMessage = error.message || 'Failed to fetch tasks';
+    let statusCode = 500;
+    
+    // エラー種別に基づいた適切なメッセージを提供
+    if (error.message.includes('Rate limit exceeded')) {
+      errorMessage = 'Google Tasks APIの呼び出し回数制限に達しました。時間をおいて再試行してください。';
+      statusCode = 429;
+    } else if (error.message.includes('Network Error') || error.message.includes('Failed to fetch')) {
+      errorMessage = 'ネットワーク接続に問題があります。インターネット接続を確認してください。';
+      statusCode = 503;
+    } else if (error.message.includes('404')) {
+      errorMessage = '指定されたタスクリストが見つかりません。';
+      statusCode = 404;
+    } else if (error.message.includes('401') || error.message.includes('403')) {
+      errorMessage = '認証エラーが発生しました。再ログインしてください。';
+      statusCode = 401;
+    }
+    
     // エラーレスポンス
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch tasks' },
-      { status: 500 }
+      { error: errorMessage, code: statusCode },
+      { status: statusCode }
     );
   }
 }
@@ -91,8 +151,8 @@ export async function POST(
       parent
     };
 
-    // Google Tasks APIで新しいタスクを作成
-    const newTask = await googleTasksApi.createTask(
+    // 最適化されたAPIで新しいタスクを作成
+    const newTask = await optimizedApi.createTaskOptimized(
       tasklistId,
       taskData,
       accessToken

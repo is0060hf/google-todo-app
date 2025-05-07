@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { prisma } from '@/app/lib/prisma';
-import * as googleTasksApi from '@/app/lib/api/google-tasks';
+import { authOptions } from '../../auth/[...nextauth]/route';
+import { prisma } from '../../../lib/prisma';
+import * as googleTasksApi from '../../../lib/api/google-tasks';
+import * as optimizedApi from '../../../lib/api/optimized-google-tasks';
 
 // タスクリスト一覧取得API
-export async function GET() {
+export async function GET(request: Request) {
   try {
     // セッションからユーザー情報を取得
     const session = await getServerSession(authOptions);
@@ -25,10 +26,32 @@ export async function GET() {
       );
     }
 
-    // Google Tasks APIからタスクリスト一覧を取得
-    const taskLists = await googleTasksApi.getTaskLists(accessToken);
+    // リクエストヘッダーからIf-None-Matchを取得
+    const ifNoneMatch = request.headers.get('If-None-Match');
+
+    // 最適化されたGoogle Tasks APIからタスクリスト一覧を取得
+    const result = await optimizedApi.getTaskListsOptimized(accessToken, ifNoneMatch || undefined);
     
-    return NextResponse.json({ taskLists });
+    // 304 Not Modified の場合
+    if (result.notModified) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: {
+          'ETag': ifNoneMatch || '',
+        },
+      });
+    }
+    
+    // 正常レスポンス
+    const response = NextResponse.json({ taskLists: result.data });
+    
+    // ETagをレスポンスヘッダーに設定
+    if (result.etag) {
+      response.headers.set('ETag', result.etag);
+      response.headers.set('Cache-Control', 'private, max-age=0, must-revalidate');
+    }
+    
+    return response;
   } catch (error: any) {
     console.error('Error fetching task lists:', error);
     
@@ -72,8 +95,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Google Tasks APIで新しいタスクリストを作成
-    const newTaskList = await googleTasksApi.createTaskList(
+    // Google Tasks APIで新しいタスクリストを作成（リトライ機能付き）
+    const newTaskList = await optimizedApi.createTaskOptimized(
       { title },
       accessToken
     );
