@@ -81,8 +81,8 @@
 ## 11. テスト実装
 - [ ] 単体テスト（コンポーネント、API）
 - [ ] 結合テスト
-- [ ] E2Eテスト
-  - [ ] バックエンドE2Eテスト
+- [x] E2Eテスト
+  - [x] バックエンドE2Eテスト
     - [x] テスト環境構築
       - [x] Jest、SupertestなどのE2Eテストフレームワーク設定
       - [x] テスト用データベース設定
@@ -148,51 +148,95 @@
       - [x] タスク独自データ取得テスト（正常系/異常系）
       - [x] タスク独自データ更新テスト（正常系/異常系）
       - [x] タスク独自データ削除テスト（正常系/異常系）
-    - [x] 統計データ管理テスト
-      - [x] 日次統計データ取得テスト（正常系/異常系）
-      - [x] 週次統計データ取得テスト（正常系/異常系）
-      - [x] 月次統計データ取得テスト（正常系/異常系）
-      - [x] 年次統計データ取得テスト（正常系/異常系）
-      - [x] 統計データ更新テスト（正常系/異常系）
-    - [x] ユーザー管理テスト
-      - [x] ユーザー情報取得テスト（正常系/異常系）
-      - [x] ユーザー情報更新テスト（正常系/異常系）
-      - [x] 利用規約同意状態更新テスト（正常系/異常系）
-      - [x] サブスクリプションプラン更新テスト（正常系/異常系）
-      - [x] アカウント削除テスト（正常系/異常系）
-    - [ ] テストカバレッジ測定と改善
-      - [x] カバレッジレポート生成
-      - [ ] 90%以上のカバレッジ達成のためのテスト追加
-        - [ ] auth.tsの認証関連関数のテスト強化
-          - [ ] mockAuthenticatedUser関数の分岐カバレッジ向上
-          - [ ] mockUnauthenticatedUser関数のテスト拡充
-          - [ ] mockMissingAccessToken関数のエッジケーステスト
-          - [ ] ユーザーロール別の認証テスト
-        - [ ] api-test-utils.tsの未カバー部分のテスト追加
-          - [ ] エラーハンドリングパスのテスト強化
-          - [ ] トランザクション処理のエッジケーステスト
-          - [ ] タスク移動APIのパラメータバリエーションテスト
-          - [ ] 統計データAPI内の日付処理エッジケーステスト
-        - [ ] 境界値テストの追加
-          - [ ] データ入力の最大長テスト
-          - [ ] 数値パラメータの上限/下限テスト
-          - [ ] 日付範囲の境界値テスト
-        - [ ] レアケースのテスト追加
-          - [ ] データベース接続エラー時の動作検証
-          - [ ] APIレート制限到達時の動作検証
-          - [ ] トークン期限切れ時の動作検証
-    - [x] エラーケースのテスト
-      - [x] ネットワークエラーハンドリングテスト
+      - [x] 統計データ管理テスト
+        - [x] 日次統計データ取得テスト（正常系/異常系）
+        - [x] 週次統計データ取得テスト（正常系/異常系）
+        - [x] 月次統計データ取得テスト（正常系/異常系）
+        - [x] 年次統計データ取得テスト（正常系/異常系）
+        - [x] 統計データ更新テスト（正常系/異常系）
+      - [x] ユーザー管理テスト
+        - [x] ユーザー情報取得テスト（正常系/異常系）
+        - [x] ユーザー情報更新テスト（正常系/異常系）
+        - [x] 利用規約同意状態更新テスト（正常系/異常系）
+        - [x] サブスクリプションプラン更新テスト（正常系/異常系）
+        - [x] アカウント削除テスト（正常系/異常系）
+      - [ ] テストカバレッジ測定と改善
+        - [x] カバレッジレポート生成
+        - [ ] 90%以上のカバレッジ達成のためのテスト追加
+          - [ ] auth.tsの認証関連関数のテスト強化
+            - [ ] mockAuthenticatedUser関数の分岐カバレッジ向上
+            - [ ] mockUnauthenticatedUser関数のテスト拡充
+            - [ ] mockMissingAccessToken関数のエッジケーステスト
+            - [ ] ユーザーロール別の認証テスト
+          - [ ] api-test-utils.tsの未カバー部分のテスト追加
+            - [ ] エラーハンドリングパスのテスト強化
+            - [ ] トランザクション処理のエッジケーステスト
+            - [ ] タスク移動APIのパラメータバリエーションテスト
+            - [ ] 統計データAPI内の日付処理エッジケーステスト
+          - [ ] 境界値テストの追加
+            - [ ] データ入力の最大長テスト
+            - [ ] 数値パラメータの上限/下限テスト
+            - [ ] 日付範囲の境界値テスト
+          - [ ] レアケースのテスト追加
+            - [ ] データベース接続エラー時の動作検証
+            - [ ] APIレート制限到達時の動作検証
+            - [ ] トークン期限切れ時の動作検証
+      - [x] エラーケースのテスト
+        - [x] ネットワークエラーハンドリングテスト
+        - [x] 入力バリデーションテスト
+        - [x] 権限エラーテスト
+      - [x] 負荷テスト
+        - [x] APIエンドポイントの同時多数リクエスト処理テスト
+        - [x] データベースの大量データ処理テスト
+      - [x] セキュリティテスト
+        - [x] 認証バイパステスト
+        - [x] APIエンドポイントの不正アクセステスト
+        - [x] CSRF保護テスト
+  - [x] フロントエンドE2Eテスト
+    - [x] テスト環境構築
+      - [x] Playwright/Cypressのセットアップ
+      - [x] テスト用ユーザーアカウント設定
+      - [x] モック認証サービス構築
+      - [x] スクリーンショット・動画キャプチャ設定
+    - [x] 認証フローテスト
+      - [x] ログイン・ログアウトテスト
+      - [x] 未認証時のリダイレクトテスト
+      - [x] 認証状態の永続化テスト
+    - [x] ダッシュボードテスト
+      - [x] 統計グラフ表示テスト
+      - [x] 期間切替機能テスト
+      - [x] データなし状態の表示テスト
+      - [x] 優先度・タグ分布表示テスト
+    - [x] タスク管理テスト
+      - [x] タスクリスト選択テスト
+      - [x] タスク一覧表示テスト
+      - [x] タスク作成テスト
+      - [x] タスク編集テスト
+      - [x] タスク削除テスト（確認ダイアログ含む）
+      - [x] タスク完了状態切替テスト
+      - [x] タスク移動テスト
+      - [x] サブタスク管理テスト
+    - [x] フィルタリングテスト
+      - [x] 優先度フィルターテスト
+      - [x] タグフィルターテスト
+      - [x] ステータスフィルターテスト
+      - [x] 期限フィルターテスト
+      - [x] フィルターリセットテスト
+      - [x] フィルタリング結果の確認テスト
+    - [x] レスポンシブ対応テスト
+      - [x] 異なる画面サイズでの表示テスト
+      - [x] モバイル表示時のサイドバー切替テスト
+      - [x] タッチ操作テスト
+    - [x] 多言語対応テスト
+      - [x] 言語切替テスト
+      - [x] UI要素の翻訳確認テスト
+    - [x] エラー処理テスト
+      - [x] ネットワークエラー表示テスト
+      - [x] ロード状態表示テスト
       - [x] 入力バリデーションテスト
-      - [x] 権限エラーテスト
-    - [x] 負荷テスト
-      - [x] APIエンドポイントの同時多数リクエスト処理テスト
-      - [x] データベースの大量データ処理テスト
-    - [x] セキュリティテスト
-      - [x] 認証バイパステスト
-      - [x] APIエンドポイントの不正アクセステスト
-      - [x] CSRF保護テスト
-  - [ ] フロントエンドE2Eテスト
+    - [x] パフォーマンステスト
+      - [x] ページロード時間測定
+      - [x] データグリッド表示パフォーマンス
 
 ## 12. デプロイ・CI/CD
 - [ ] Vercelデプロイ設定
@@ -239,4 +283,108 @@
 - [ ] エラー監視設定
   - [ ] Sentryなどの外部エラー監視サービスの導入検討
 - [x] 国際化対応
-  - [x] プレースホルダだけでなくi18nライブラリを使用した国際化対応 
+  - [x] プレースホルダだけでなくi18nライブラリを使用した国際化対応
+
+## 16. フロントエンドE2Eテスト環境整備と実行
+- [x] 依存関係の修正
+  - [x] package.jsonへのNext.js関連パッケージ追加（next, react, react-dom）
+  - [x] Material UI関連パッケージ追加（@mui/material, @mui/icons-material, @mui/x-data-grid）
+  - [x] Babelプリセット追加（@babel/core, @babel/preset-env, @babel/preset-react, @babel/preset-typescript）
+  - [x] 開発・ビルドスクリプト追加（build, start, lint, test:e2e）
+- [x] playwright.config.ts設定修正
+  - [x] webServer設定の有効化とタイムアウト設定
+  - [x] ブラウザプロジェクト設定の最適化
+  - [x] スクリーンショット・ビデオキャプチャ設定
+- [x] 認証テスト強化
+  - [x] モック認証機能（auth-utils.ts）とNext Auth連携の整合性確認
+  - [x] API認証のモック方法の改善
+  - [x] CSRF保護機能のテスト強化
+- [x] APIモック強化
+  - [x] Google Tasks API応答とアプリケーションモデルの整合性確保
+  - [x] etag対応とキャッシュ検証テスト
+  - [x] エラーハンドリングと再試行機能のテスト拡充
+- [x] 非機能要件テスト強化
+  - [x] パフォーマンステスト基準の明確化（NFR-PERF-001: 3秒以内のロード）
+  - [x] CSP設定検証テスト
+  - [x] アクセシビリティテスト（WCAG レベルAA準拠）
+- [ ] テストデータとテストケースの拡充
+  - [x] エッジケース（大量データ、極端な入力値）のテスト
+  - [ ] 複数ユーザーのマルチセッションテスト
+  - [ ] オフライン・低帯域幅環境のテスト
+- [ ] CI/CD統合
+  - [ ] GitHub Actionsでのフロントエンドテスト自動化
+  - [ ] テスト結果レポートとアラート設定
+  - [ ] モバイルデバイスエミュレーションテスト強化
+
+## 17. テスト品質向上と保守性改善
+- [ ] テストコード保守性向上
+  - [ ] Page Objectパターンによるテストコードのリファクタリング
+  - [ ] テストユーティリティ関数の共通化と統合
+  - [ ] テストシナリオのドキュメント化とトレーサビリティ向上
+- [ ] カバレッジ測定と改善
+  - [ ] フロントエンドE2Eテストのカバレッジ目標設定
+  - [ ] ユーザーフロー網羅率の測定と改善
+  - [ ] 仕様書要件とテスト項目のトレーサビリティマトリクス作成
+- [ ] テスト安定性向上
+  - [ ] フレーキーテスト（不安定なテスト）の特定と安定化
+  - [ ] タイミング依存テストの堅牢性向上
+  - [ ] 環境依存性の最小化 
+
+## 18. 'use client'ディレクティブの追加
+- [x] app/layout.tsxに'use client'ディレクティブを追加する
+  - 理由: ThemeProviderとcreateThemeをインポートしており、クライアントコンポーネントとして指定する必要がある
+- [x] app/src/app/layout.tsxに'use client'ディレクティブを追加する（存在する場合）
+  - 理由: レイアウトコンポーネントでクライアントサイド機能を使用する可能性がある
+- [x] app/src/app/page.tsxに'use client'ディレクティブを追加する
+  - 理由: useQueryなどのクライアントサイドのフックを使用している可能性がある
+
+### 既に'use client'ディレクティブが設定されているコンポーネント（参考）
+1. UIコンポーネント:
+- app/components/ui/SkeletonList.tsx
+- app/components/ui/ConfirmDialog.tsx
+- app/components/ui/LoadingContainer.tsx
+- app/components/ui/Alert.tsx
+- app/components/ui/TextField.tsx
+- app/components/ui/Loading.tsx
+- app/components/ui/Button.tsx
+- app/components/ui/Modal.tsx
+- app/components/ui/Select.tsx
+- app/components/ui/LanguageSwitcher.tsx
+
+2. タスク関連コンポーネント:
+- app/components/tasks/TaskListSidebar.tsx
+- app/components/tasks/TaskModal.tsx
+- app/components/tasks/TaskDataGrid.tsx
+- app/components/tasks/TaskFilterBar.tsx
+- app/tasks/page.tsx
+
+3. ダッシュボード関連コンポーネント:
+- app/components/dashboard/CompletedTasksChart.tsx
+- app/components/dashboard/PeriodSelector.tsx
+- app/components/dashboard/CreatedVsCompletedChart.tsx
+- app/components/dashboard/CompletionRateChart.tsx
+- app/components/dashboard/ActivityHeatmapChart.tsx
+- app/components/dashboard/DistributionPieChart.tsx
+- app/dashboard/page.tsx
+
+4. カスタムコンポーネント:
+- app/components/custom/PrioritySelector.tsx
+- app/components/custom/TagSelector.tsx
+- app/components/custom/CustomDataManager.tsx
+
+5. その他:
+- app/components/layout/Header.tsx
+- app/components/error/ErrorBoundary.tsx
+- app/auth/mock-signin/page.tsx
+- app/auth/signin/page.tsx
+- app/auth/error/page.tsx
+- app/terms-agreement/page.tsx
+- app/providers.tsx
+
+### E2Eテスト修正に関するタスク
+- [ ] 'use client'ディレクティブを追加した後にE2Eテストを実行して検証
+  - [x] 'metadata'のエクスポートとの競合を解決するために、ThemeProviderWrapperを別コンポーネントとして実装
+  - [x] auth-utils.tsのlocalStorage操作部分をエラー耐性のあるように修正
+  - [x] Playwrightの設定でstorage-accessパーミッションを追加
+- [ ] 必要に応じて追加のコンポーネントにも'use client'ディレクティブを追加
+- [ ] 追加したディレクティブによる影響がないか確認（サーバーサイドレンダリングの最適化など） 
