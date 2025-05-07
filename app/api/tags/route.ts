@@ -1,27 +1,18 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
+import { authorizeApiRequest } from '@/app/lib/auth';
 
 // タグ一覧を取得するAPI
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // セッションからユーザー情報を取得
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // 認証・認可チェック
+    const authResult = await authorizeApiRequest(request);
+    if (authResult.error) {
+      return authResult.response;
     }
 
-    // @ts-ignore - next-authの型定義と実際の挙動の差異
+    const { session } = authResult;
     const userId = session.user.id;
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID not found in session' }, 
-        { status: 401 }
-      );
-    }
 
     // ユーザーのタグを取得
     const tags = await prisma.tag.findMany({
@@ -42,8 +33,17 @@ export async function GET() {
 }
 
 // 新しいタグを作成するAPI
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // 認証・認可チェック
+    const authResult = await authorizeApiRequest(request);
+    if (authResult.error) {
+      return authResult.response;
+    }
+
+    const { session } = authResult;
+    const userId = session.user.id;
+
     // リクエストボディを取得
     const body = await request.json();
     const { name } = body;
@@ -52,23 +52,6 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Tag name is required' },
         { status: 400 }
-      );
-    }
-
-    // セッションからユーザー情報を取得
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // @ts-ignore - next-authの型定義と実際の挙動の差異
-    const userId = session.user.id;
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID not found in session' }, 
-        { status: 401 }
       );
     }
 

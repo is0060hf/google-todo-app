@@ -1,11 +1,10 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
+import { authorizeApiRequest } from '@/app/lib/auth';
 
 // 特定のタグを取得するAPI
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { tagId: string } }
 ) {
   try {
@@ -18,29 +17,23 @@ export async function GET(
       );
     }
 
-    // セッションからユーザー情報を取得
-    const session = await getServerSession(authOptions);
+    // 認証・認可チェック - タグリソースへのアクセス権限を確認
+    const authResult = await authorizeApiRequest(request, {
+      resourceCheck: {
+        type: 'tag',
+        id: tagId
+      }
+    });
     
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (authResult.error) {
+      return authResult.response;
     }
 
-    // @ts-ignore - next-authの型定義と実際の挙動の差異
-    const userId = session.user.id;
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID not found in session' }, 
-        { status: 401 }
-      );
-    }
+    const { session } = authResult;
 
     // ユーザーのタグを取得
-    const tag = await prisma.tag.findFirst({
-      where: {
-        id: tagId,
-        userId // 自分のタグのみアクセス可能
-      }
+    const tag = await prisma.tag.findUnique({
+      where: { id: tagId }
     });
     
     if (!tag) {
@@ -60,7 +53,7 @@ export async function GET(
 
 // タグを更新するAPI
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { tagId: string } }
 ) {
   try {
@@ -73,6 +66,21 @@ export async function PATCH(
       );
     }
 
+    // 認証・認可チェック - タグリソースへのアクセス権限を確認
+    const authResult = await authorizeApiRequest(request, {
+      resourceCheck: {
+        type: 'tag',
+        id: tagId
+      }
+    });
+    
+    if (authResult.error) {
+      return authResult.response;
+    }
+
+    const { session } = authResult;
+    const userId = session.user.id;
+
     // リクエストボディを取得
     const body = await request.json();
     const { name } = body;
@@ -82,35 +90,6 @@ export async function PATCH(
         { error: 'Tag name is required' },
         { status: 400 }
       );
-    }
-
-    // セッションからユーザー情報を取得
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // @ts-ignore - next-authの型定義と実際の挙動の差異
-    const userId = session.user.id;
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID not found in session' }, 
-        { status: 401 }
-      );
-    }
-
-    // タグの存在確認
-    const existingTag = await prisma.tag.findFirst({
-      where: {
-        id: tagId,
-        userId
-      }
-    });
-
-    if (!existingTag) {
-      return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
     }
 
     // 同名タグの存在確認（更新対象以外）
@@ -148,7 +127,7 @@ export async function PATCH(
 
 // タグを削除するAPI
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { tagId: string } }
 ) {
   try {
@@ -161,33 +140,16 @@ export async function DELETE(
       );
     }
 
-    // セッションからユーザー情報を取得
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // @ts-ignore - next-authの型定義と実際の挙動の差異
-    const userId = session.user.id;
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID not found in session' }, 
-        { status: 401 }
-      );
-    }
-
-    // タグの存在確認
-    const existingTag = await prisma.tag.findFirst({
-      where: {
-        id: tagId,
-        userId
+    // 認証・認可チェック - タグリソースへのアクセス権限を確認
+    const authResult = await authorizeApiRequest(request, {
+      resourceCheck: {
+        type: 'tag',
+        id: tagId
       }
     });
-
-    if (!existingTag) {
-      return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
+    
+    if (authResult.error) {
+      return authResult.response;
     }
 
     // タグを削除
