@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import Header from './components/layout/Header';
 import './globals.css';
 import ThemeProviderWrapper from './components/ThemeProviderWrapper';
+import FeedbackNotificationsWrapper from './components/ui/FeedbackNotificationsWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
           <main style={{ marginTop: '64px', minHeight: 'calc(100vh - 64px)', padding: '24px' }}>
             {children}
           </main>
+          <FeedbackNotificationsWrapper />
         </ThemeProviderWrapper>
       </body>
     </html>

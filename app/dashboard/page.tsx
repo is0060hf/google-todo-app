@@ -10,29 +10,44 @@ import {
   Alert,
   CircularProgress,
   useMediaQuery,
-  Theme
+  Theme,
+  useTheme
 } from '@mui/material';
-import PeriodSelector, { PeriodType } from '../components/dashboard/PeriodSelector';
-import CompletedTasksChart from '../components/dashboard/CompletedTasksChart';
-import CompletionRateChart from '../components/dashboard/CompletionRateChart';
-import CreatedVsCompletedChart from '../components/dashboard/CreatedVsCompletedChart';
-import ActivityHeatmapChart from '../components/dashboard/ActivityHeatmapChart';
-import DistributionPieChart from '../components/dashboard/DistributionPieChart';
+import { CompletedTasksChart } from '../components/dashboard/CompletedTasksChart';
+import { CompletionRateChart } from '../components/dashboard/CompletionRateChart';
+import { CreatedVsCompletedChart } from '../components/dashboard/CreatedVsCompletedChart';
+import { ActivityHeatmapChart } from '../components/dashboard/ActivityHeatmapChart';
+import { DistributionPieChart } from '../components/dashboard/DistributionPieChart';
+import { PeriodSelector, PeriodType } from '../components/dashboard/PeriodSelector';
+import DashboardSkeletonLoader from '../components/dashboard/DashboardSkeletonLoader';
 import { useStatsData } from '../lib/hooks/useStatsData';
+import { useTranslation } from 'react-i18next';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const { t } = useTranslation('common');
+  
   const [period, setPeriod] = useState<PeriodType>('monthly');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
   
   const { 
     data, 
     loading, 
     error, 
-    priorityDistribution,
-    tagDistribution
+    priorityDistribution, 
+    tagDistribution 
   } = useStatsData(period, currentDate);
+  
+  // ローディング中のスケルトン表示
+  if (loading) {
+    return (
+      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+        <DashboardSkeletonLoader compact={isSmallScreen} />
+      </Container>
+    );
+  }
   
   // 認証中・未認証の場合
   if (status === 'loading') {
@@ -161,7 +176,7 @@ export default function DashboardPage() {
           currentDate={currentDate}
           loading={loading}
           error={error ? error : null}
-          compact={isMobile} // モバイル表示では省スペースモード
+          compact={isSmallScreen} // モバイル表示では省スペースモード
         />
       </Paper>
     </Container>

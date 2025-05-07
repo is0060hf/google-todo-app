@@ -38,6 +38,7 @@ import { useTaskStore, Task, useFilteredTasks } from '../../store/taskStore';
 import { useApiGet, useApiPatch, useApiDelete, useApiPost } from '../../lib/api-hooks';
 import { Loading, ConfirmDialog } from '../../components/ui';
 import TaskCard from './TaskCard';
+import TaskSkeletonLoader from './TaskSkeletonLoader';
 
 // 日付をフォーマットする関数
 const formatDate = (dateString?: string) => {
@@ -641,7 +642,7 @@ export function TaskDataGrid() {
 
   // ローディング中
   if (loading || isLoading) {
-    return <Loading aria-label="タスクデータを読み込み中" />;
+    return <TaskSkeletonLoader aria-label="タスクデータを読み込み中" />;
   }
 
   // エラー表示

@@ -14,6 +14,14 @@ export type AlertProps = MuiAlertProps & {
   snackbar?: boolean;
 };
 
+export type SnackbarAlertProps = Omit<AlertProps, 'snackbar'> & {
+  open: boolean;
+  anchorOrigin?: {
+    vertical: 'top' | 'bottom';
+    horizontal: 'left' | 'center' | 'right';
+  };
+};
+
 /**
  * アラートコンポーネント
  * エラーメッセージやお知らせを表示するためのコンポーネント
@@ -107,4 +115,49 @@ const Alert: React.FC<AlertProps> = ({
   return open ? alertContent : null;
 };
 
+/**
+ * スナックバー形式のアラートコンポーネント
+ * 画面上部または下部に一時的に表示されるメッセージ
+ */
+export const SnackbarAlert: React.FC<SnackbarAlertProps> = ({
+  open,
+  message,
+  severity = 'info',
+  autoClose = true,
+  autoCloseDelay = 5000,
+  onClose,
+  anchorOrigin = { vertical: 'top', horizontal: 'center' },
+  ...props
+}) => {
+  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') return;
+    onClose?.();
+  };
+
+  // aria-live属性の設定（エラーの重要度に応じて）
+  const ariaLive = severity === 'error' ? 'assertive' : 'polite';
+
+  return (
+    <Snackbar
+      open={open}
+      autoHideDuration={autoClose ? autoCloseDelay : null}
+      onClose={handleClose}
+      anchorOrigin={anchorOrigin}
+    >
+      <MuiAlert
+        severity={severity}
+        variant="filled"
+        onClose={handleClose}
+        role="alert"
+        aria-live={ariaLive}
+        sx={{ width: '100%' }}
+        {...props}
+      >
+        {message}
+      </MuiAlert>
+    </Snackbar>
+  );
+};
+
+export { Alert };
 export default Alert; 

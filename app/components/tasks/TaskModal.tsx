@@ -40,6 +40,7 @@ import { useTaskStore, Task, Priority, Tag } from '../../store/taskStore';
 import { useApiGet, useApiPost, useApiPatch } from '../../lib/api-hooks';
 import { PrioritySelector } from '../custom/PrioritySelector';
 import { TagSelector } from '../custom/TagSelector';
+import { showFeedback } from '../../lib/feedback';
 
 interface TaskFormData {
   title: string;
@@ -345,17 +346,23 @@ export function TaskModal() {
             ...customData,
             googleTaskId: result.task.id,
           });
+          // 成功メッセージを表示
+          showFeedback.success('タスクが正常に作成されました');
         }
       } else {
         // タスクの更新
         await updateTaskMutation.mutateAsync(taskData);
         // カスタムデータの更新
         await updateCustomDataMutation.mutateAsync(customData);
+        // 成功メッセージを表示
+        showFeedback.success('タスクが正常に更新されました');
       }
       setIsSubmitting(false);
     } catch (error) {
       console.error('Failed to save task:', error);
       setApiError('タスクの保存中にエラーが発生しました。もう一度お試しください。');
+      // エラーメッセージをフィードバックで表示
+      showFeedback.error('タスクの保存に失敗しました。もう一度お試しください。');
       setIsSubmitting(false);
     }
   };
