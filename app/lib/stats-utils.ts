@@ -211,44 +211,154 @@ function calculateCompletionRate(completedCount: number, createdCount: number): 
  */
 export async function recalculateAllStats(userId: string) {
   try {
-    // 1. このユーザーのすべてのタスクを取得
-    // 実際にはGoogle Tasks APIからタスクを取得する必要があります
-    // ここでは実装の概要だけ示します
+    // Google Tasks APIからタスクを取得する関数
+    const { tasksGroupedByDay, tasksGroupedByWeek, tasksGroupedByMonth, tasksGroupedByYear } = 
+      await fetchAndGroupTasks(userId);
     
-    // 2. 期間ごとにタスクをグループ化
-    // 日次、週次、月次、年次のデータを集計
+    // トランザクションを使わず、通常のクエリとして実行
+    // 1. 日次データの処理
+    for (const [dateStr, tasks] of Object.entries(tasksGroupedByDay)) {
+      const date = new Date(dateStr);
+      const completedCount = tasks.filter(task => task.status === 'completed').length;
+      const createdCount = tasks.length;
+      
+      const existingStats = await prisma.dailyStats.findFirst({
+        where: {
+          userId,
+          date
+        }
+      });
+      
+      if (existingStats) {
+        await prisma.dailyStats.update({
+          where: { id: existingStats.id },
+          data: {
+            completedCount,
+            createdCount,
+            completionRate: calculateCompletionRate(completedCount, createdCount)
+          }
+        });
+      } else {
+        await prisma.dailyStats.create({
+          data: {
+            userId,
+            date,
+            completedCount,
+            createdCount,
+            completionRate: calculateCompletionRate(completedCount, createdCount)
+          }
+        });
+      }
+    }
     
-    // 3. 統計データをDB内の対応するレコードに一括更新
+    // 2. 週次データの処理
+    for (const [yearWeekKey, tasks] of Object.entries(tasksGroupedByWeek)) {
+      const [year, weekOfYear] = yearWeekKey.split('-').map(Number);
+      const completedCount = tasks.filter(task => task.status === 'completed').length;
+      const createdCount = tasks.length;
+      
+      const existingStats = await prisma.weeklyStats.findFirst({
+        where: {
+          userId,
+          year,
+          weekOfYear
+        }
+      });
+      
+      if (existingStats) {
+        await prisma.weeklyStats.update({
+          where: { id: existingStats.id },
+          data: {
+            completedCount,
+            createdCount,
+            completionRate: calculateCompletionRate(completedCount, createdCount)
+          }
+        });
+      } else {
+        await prisma.weeklyStats.create({
+          data: {
+            userId,
+            year,
+            weekOfYear,
+            completedCount,
+            createdCount,
+            completionRate: calculateCompletionRate(completedCount, createdCount)
+          }
+        });
+      }
+    }
     
-    // 実装例：日次データの更新
-    // const tasksGroupedByDay = groupTasksByDay(tasks);
-    // for (const [date, tasksForDay] of Object.entries(tasksGroupedByDay)) {
-    //   const completedCount = tasksForDay.filter(task => task.status === 'completed').length;
-    //   const createdCount = tasksForDay.length;
-    //   
-    //   await prisma.dailyStats.upsert({
-    //     where: { 
-    //       userId_date: {
-    //         userId,
-    //         date: new Date(date)
-    //       }
-    //     },
-    //     update: {
-    //       completedCount,
-    //       createdCount,
-    //       completionRate: calculateCompletionRate(completedCount, createdCount)
-    //     },
-    //     create: {
-    //       userId,
-    //       date: new Date(date),
-    //       completedCount,
-    //       createdCount,
-    //       completionRate: calculateCompletionRate(completedCount, createdCount)
-    //     }
-    //   });
-    // }
+    // 3. 月次データの処理
+    for (const [yearMonthKey, tasks] of Object.entries(tasksGroupedByMonth)) {
+      const [year, month] = yearMonthKey.split('-').map(Number);
+      const completedCount = tasks.filter(task => task.status === 'completed').length;
+      const createdCount = tasks.length;
+      
+      const existingStats = await prisma.monthlyStats.findFirst({
+        where: {
+          userId,
+          year,
+          month
+        }
+      });
+      
+      if (existingStats) {
+        await prisma.monthlyStats.update({
+          where: { id: existingStats.id },
+          data: {
+            completedCount,
+            createdCount,
+            completionRate: calculateCompletionRate(completedCount, createdCount)
+          }
+        });
+      } else {
+        await prisma.monthlyStats.create({
+          data: {
+            userId,
+            year,
+            month,
+            completedCount,
+            createdCount,
+            completionRate: calculateCompletionRate(completedCount, createdCount)
+          }
+        });
+      }
+    }
     
-    // 同様に週次、月次、年次のデータも更新
+    // 4. 年次データの処理
+    for (const [yearKey, tasks] of Object.entries(tasksGroupedByYear)) {
+      const year = Number(yearKey);
+      const completedCount = tasks.filter(task => task.status === 'completed').length;
+      const createdCount = tasks.length;
+      
+      const existingStats = await prisma.yearlyStats.findFirst({
+        where: {
+          userId,
+          year
+        }
+      });
+      
+      if (existingStats) {
+        await prisma.yearlyStats.update({
+          where: { id: existingStats.id },
+          data: {
+            completedCount,
+            createdCount,
+            completionRate: calculateCompletionRate(completedCount, createdCount)
+          }
+        });
+      } else {
+        await prisma.yearlyStats.create({
+          data: {
+            userId,
+            year,
+            completedCount,
+            createdCount,
+            completionRate: calculateCompletionRate(completedCount, createdCount)
+          }
+        });
+      }
+    }
     
     return { success: true };
   } catch (error) {
@@ -258,4 +368,108 @@ export async function recalculateAllStats(userId: string) {
       error: error instanceof Error ? error.message : '統計データの再計算に失敗しました' 
     };
   }
+}
+
+/**
+ * ユーザーのタスクを取得し、日/週/月/年ごとにグループ化する関数
+ * @param userId ユーザーID
+ */
+async function fetchAndGroupTasks(userId: string) {
+  // 各タスクリストのIDを取得
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      accounts: {
+        where: { provider: 'google' },
+        select: { access_token: true }
+      }
+    }
+  });
+  
+  if (!user?.accounts[0]?.access_token) {
+    throw new Error('アクセストークンが見つかりません');
+  }
+  
+  const access_token = user.accounts[0].access_token;
+  
+  // Google Tasks APIからタスクリスト一覧を取得
+  const taskListsResponse = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
+    headers: {
+      'Authorization': `Bearer ${access_token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  
+  if (!taskListsResponse.ok) {
+    throw new Error('タスクリストの取得に失敗しました');
+  }
+  
+  const taskLists = await taskListsResponse.json();
+  
+  // すべてのタスクリストからタスクを取得
+  let allTasks = [];
+  for (const list of taskLists.items || []) {
+    const tasksResponse = await fetch(
+      `https://tasks.googleapis.com/tasks/v1/lists/${list.id}/tasks?showCompleted=true&showHidden=true&maxResults=100`,
+      {
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    if (tasksResponse.ok) {
+      const tasksData = await tasksResponse.json();
+      if (tasksData.items) {
+        allTasks = [...allTasks, ...tasksData.items];
+      }
+    }
+  }
+  
+  // タスクを日付ごとにグループ化
+  const tasksGroupedByDay = {};
+  const tasksGroupedByWeek = {};
+  const tasksGroupedByMonth = {};
+  const tasksGroupedByYear = {};
+  
+  allTasks.forEach(task => {
+    if (task.deleted) return; // 削除済みタスクはスキップ
+    
+    // タスクの作成日を取得（updatedがない場合は現在日付を使用）
+    const taskDate = task.updated ? new Date(task.updated) : new Date();
+    
+    // 日付情報を抽出
+    const normalizedDate = startOfDay(taskDate);
+    const year = getYear(normalizedDate);
+    const month = getMonth(normalizedDate) + 1; // getMonthは0始まりなので+1
+    const weekOfYear = getWeek(normalizedDate, { weekStartsOn: 1 });
+    
+    // 日次データ用のキー（YYYY-MM-DD形式）
+    const dayKey = format(normalizedDate, 'yyyy-MM-dd');
+    if (!tasksGroupedByDay[dayKey]) tasksGroupedByDay[dayKey] = [];
+    tasksGroupedByDay[dayKey].push(task);
+    
+    // 週次データ用のキー（YYYY-WW形式）
+    const weekKey = `${year}-${weekOfYear}`;
+    if (!tasksGroupedByWeek[weekKey]) tasksGroupedByWeek[weekKey] = [];
+    tasksGroupedByWeek[weekKey].push(task);
+    
+    // 月次データ用のキー（YYYY-MM形式）
+    const monthKey = `${year}-${month}`;
+    if (!tasksGroupedByMonth[monthKey]) tasksGroupedByMonth[monthKey] = [];
+    tasksGroupedByMonth[monthKey].push(task);
+    
+    // 年次データ用のキー（YYYY形式）
+    const yearKey = `${year}`;
+    if (!tasksGroupedByYear[yearKey]) tasksGroupedByYear[yearKey] = [];
+    tasksGroupedByYear[yearKey].push(task);
+  });
+  
+  return {
+    tasksGroupedByDay,
+    tasksGroupedByWeek,
+    tasksGroupedByMonth,
+    tasksGroupedByYear
+  };
 } 

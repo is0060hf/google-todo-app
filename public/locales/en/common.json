@@ -13,7 +13,13 @@
       "monthly": "Monthly",
       "yearly": "Yearly"
     },
-    "noData": "No data available"
+    "noData": "No data available",
+    "completedTasksHint": "Complete some tasks to see your progress over time. Your task activity will be shown here.",
+    "goToTasks": "Go to Tasks",
+    "errorTryLater": "Please try again later or contact support if the issue persists.",
+    "taskCount": "tasks",
+    "date": "Date",
+    "period": "Period"
   },
   "tasks": {
     "title": "Task Management",
