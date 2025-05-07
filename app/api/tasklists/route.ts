@@ -4,6 +4,8 @@ import { authOptions } from '../../auth/[...nextauth]/route';
 import { prisma } from '../../../lib/prisma';
 import * as googleTasksApi from '../../../lib/api/google-tasks';
 import * as optimizedApi from '../../../lib/api/optimized-google-tasks';
+import { withCsrfProtection } from '../../../lib/csrf-protection';
+import { NextRequest } from 'next/server';
 
 // タスクリスト一覧取得API
 export async function GET(request: Request) {
@@ -63,8 +65,8 @@ export async function GET(request: Request) {
   }
 }
 
-// 新しいタスクリストを作成するAPI
-export async function POST(request: Request) {
+// 新しいタスクリストを作成するAPI（CSRF保護付き）
+async function handlePostRequest(request: NextRequest) {
   try {
     // リクエストボディを取得
     const body = await request.json();
@@ -111,4 +113,7 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}
+
+// CSRF保護付きのPOSTエンドポイント
+export const POST = withCsrfProtection(handlePostRequest); 

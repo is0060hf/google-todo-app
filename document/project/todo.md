@@ -585,22 +585,22 @@
   - [x] 日付フォーマットのローカライズ強化
 
 ### セキュリティ対応の強化
-- [ ] CSP設定の再確認
-  - [ ] 現在のCSP設定が最適か検証
-  - [ ] 'unsafe-inline'と'unsafe-eval'の必要性検討と代替策検討
-  - [ ] CSP違反レポートの収集と分析
-- [ ] CSRF対策の完全確認
-  - [ ] 全状態変更リクエストでCSRFトークン検証を実施
-  - [ ] Double Submit Cookie Patternの実装状況確認
-- [ ] OAuthトークン管理の強化
-  - [ ] リフレッシュトークンのセキュアな保管方法の確認
-  - [ ] アクセストークンの有効期限管理と自動更新
-- [ ] データベースセキュリティ
-  - [ ] Prismaを通じたSQLインジェクション対策の確認
-  - [ ] 機密データの暗号化対応検討
-- [ ] 認証フロー
-  - [ ] PKCE (Proof Key for Code Exchange)の実装状況確認
-  - [ ] セッションCookieのセキュリティ属性確認（HttpOnly, Secure, SameSite）
+- [x] CSP設定の再確認
+  - [x] 現在のCSP設定が最適か検証
+  - [x] 'unsafe-inline'と'unsafe-eval'の必要性検討と代替策検討
+  - [x] CSP違反レポートの収集と分析
+- [x] CSRF対策の完全確認
+  - [x] 全状態変更リクエストでCSRFトークン検証を実施
+  - [x] Double Submit Cookie Patternの実装状況確認
+- [x] OAuthトークン管理の強化
+  - [x] リフレッシュトークンのセキュアな保管方法の確認
+  - [x] アクセストークンの有効期限管理と自動更新
+- [x] データベースセキュリティ
+  - [x] Prismaを通じたSQLインジェクション対策の確認
+  - [x] 機密データの暗号化対応検討
+- [x] 認証フロー
+  - [x] PKCE (Proof Key for Code Exchange)の実装状況確認
+  - [x] セッションCookieのセキュリティ属性確認（HttpOnly, Secure, SameSite）
 
 ### データベース設計・実装の改善
 - [ ] Prismaスキーマと仕様書の整合性確認

@@ -33,7 +33,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: `
               default-src 'self';
-              script-src 'self' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://*.sentry.io https://*.vercel-insights.com;
+              script-src 'self' https://apis.google.com https://accounts.google.com https://*.sentry.io https://*.vercel-insights.com;
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https://lh3.googleusercontent.com https://*.sentry.io;
               connect-src 'self' https://tasks.googleapis.com https://www.googleapis.com https://api.vercel.com https://*.sentry.io https://*.vercel-insights.com;
@@ -42,7 +42,17 @@ const nextConfig = {
               object-src 'none';
               base-uri 'self';
               form-action 'self';
+              report-uri https://sentry.io/api/XXXX/security/?sentry_key=XXXX;
+              report-to default;
             `.replace(/\s{2,}/g, ' ').trim()
+          },
+          {
+            key: 'Report-To',
+            value: JSON.stringify({
+              group: 'default',
+              max_age: 31536000,
+              endpoints: [{ url: 'https://sentry.io/api/XXXX/security/?sentry_key=XXXX' }]
+            })
           },
           {
             key: 'X-Content-Type-Options',
@@ -62,7 +72,11 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload'
           },
           {
             key: 'Cache-Control',
