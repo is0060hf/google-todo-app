@@ -19,6 +19,7 @@ import { signOut, useSession } from 'next-auth/react';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import TaskIcon from '@mui/icons-material/Task';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useStore } from '../../lib/store';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
@@ -95,6 +96,20 @@ export default function Header() {
           <LanguageSwitcher />
         </Box>
         
+        {/* 設定アイコン */}
+        {session && (
+          <Tooltip title={t('settings.title', '設定')}>
+            <IconButton
+              color="inherit"
+              aria-label={t('settings.title', '設定')}
+              href="/settings"
+              sx={{ mr: 1 }}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+        
         {session?.user ? (
           <>
             <Tooltip title={t('common.account')}>
@@ -122,7 +137,7 @@ export default function Header() {
               transformOrigin={{ horizontal: 'right', vertical: 'top' }}
               anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
-              <MenuItem onClick={handleClose}>
+              <MenuItem onClick={handleClose} component="a" href="/profile">
                 {t('common.myAccount')}
               </MenuItem>
               {/* モバイル画面のみ言語切り替えを表示 */}
